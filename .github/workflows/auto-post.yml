@@ -1,0 +1,32 @@
+name: Threads Auto Posting
+
+on:
+  schedule:
+    # 6시간마다 실행 (00:00, 06:00, 12:00, 18:00 KST)
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # 수동 실행 가능
+
+jobs:
+  auto-post:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        pip install requests google-generativeai
+        
+    - name: Run auto posting
+      env:
+        THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
+        THREADS_USER_ID: ${{ secrets.THREADS_USER_ID }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      run: |
+        python github_auto_post.py
