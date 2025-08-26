@@ -2,8 +2,11 @@ name: Threads Auto Posting
 
 on:
   schedule:
-    # 6시간마다 실행 (00:00, 06:00, 12:00, 18:00 KST)
-    - cron: '0 */6 * * *'
+    # 한국시간: 새벽1시, 오전9시, 오후1시30분, 저녁8시
+    - cron: '0 16 * * *'  # 새벽 1:00 KST = UTC 16:00 (전날)
+    - cron: '0 0 * * *'   # 오전 9:00 KST = UTC 00:00
+    - cron: '30 4 * * *'  # 오후 1:30 KST = UTC 04:30
+    - cron: '0 11 * * *'  # 저녁 8:00 KST = UTC 11:00
   workflow_dispatch: # 수동 실행 가능
 
 jobs:
