@@ -24,7 +24,7 @@ jobs:
         
     - name: Install dependencies
       run: |
-        pip install requests google-generativeai
+        pip install requests google-generativeai pytz
         
     - name: Run auto posting
       env:

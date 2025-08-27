@@ -10,6 +10,7 @@ import os
 import requests
 import google.generativeai as genai
 from datetime import datetime
+import pytz
 import json
 import random
 
@@ -23,8 +24,10 @@ genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
 def get_current_time_context():
-    """현재 시간대별 컨텍스트"""
-    now = datetime.now()
+    """현재 시간대별 컨텍스트 (한국 시간 기준)"""
+    # GitHub Actions는 UTC에서 실행되므로 한국 시간으로 변환
+    kst = pytz.timezone('Asia/Seoul')
+    now = datetime.now(kst)
     hour = now.hour
     
     if 5 <= hour < 12:
@@ -38,7 +41,8 @@ def get_current_time_context():
 
 def get_weekday_style():
     """요일별 글 스타일 (일관된 정체성 유지)"""
-    weekday = datetime.now().weekday()
+    kst = pytz.timezone('Asia/Seoul')
+    weekday = datetime.now(kst).weekday()
     
     # 요일별 글쓰기 스타일만 변경 (정체성은 고정)
     weekday_moods = {
@@ -55,7 +59,8 @@ def get_weekday_style():
 
 def get_time_based_mood():
     """시간대별 감정과 톤 (대전 거주 30대 남성 관점)"""
-    hour = datetime.now().hour
+    kst = pytz.timezone('Asia/Seoul')
+    hour = datetime.now(kst).hour
     
     if 5 <= hour < 9:  # 아침
         moods = ["상쾌한", "활기찬", "희망찬", "긍정적인"]
@@ -149,7 +154,7 @@ def generate_trending_content():
 6. 글의 스타일과 톤은 자유롭게 변화
 7. 가끔 대전 지역 언급 (자연스럽게)
 
-현재 시간: {datetime.now().strftime('%Y년 %m월 %d일 %H시')}
+현재 시간: {datetime.now(kst).strftime('%Y년 %m월 %d일 %H시')}
 """
 
     try:
@@ -241,8 +246,12 @@ def post_to_threads(content):
 def main():
     """메인 실행 함수"""
     
+    kst = pytz.timezone('Asia/Seoul')
+    current_time = datetime.now(kst)
+    
     print("🤖 Threads 자동 게시 시작")
-    print(f"실행 시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"실행 시간 (KST): {current_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"UTC 시간: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}")
     print("="*60)
     
     # 환경변수 확인
