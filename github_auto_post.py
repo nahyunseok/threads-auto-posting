@@ -86,6 +86,8 @@ def get_time_based_mood():
 def generate_trending_content():
     """트렌드 기반 AI 콘텐츠 생성 (일관된 정체성 + 다양한 스타일)"""
     
+    # 한국 시간대 설정 (kst 변수 스코프 오류 수정)
+    kst = pytz.timezone('Asia/Seoul')
     korean_time, english_time = get_current_time_context()
     
     # 고정된 정체성 (이것은 변하지 않음)
