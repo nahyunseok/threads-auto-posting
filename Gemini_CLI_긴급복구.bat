@@ -29,10 +29,12 @@ echo.
 echo 🔧 3단계: MCP 서버 구성 중...
 echo    - Filesystem 서버 추가...
 call gemini mcp add filesystem npx @modelcontextprotocol/server-filesystem "C:\Users\user\Claude-Workspace"
-echo    - Shell 서버 #1 추가...
-call gemini mcp add shell npx @mkusaka/mcp-shell-server
-echo    - Shell 서버 #2 추가...
-call gemini mcp add shell-command npx shell-command-mcp
+echo    - Shell 서버 (보안 설정) 추가...
+set ALLOWED_COMMANDS=python,py,dir,type,echo,cd,ls,cat,pwd,python3,pip,npm,node,git
+call gemini mcp add shell-secure npx shell-command-mcp
+echo    - Shell 서버 (전체 권한) 추가...
+set ALLOWED_COMMANDS=all
+call gemini mcp add shell-all npx @mkusaka/mcp-shell-server
 echo    - 기타 서버들 추가...
 call gemini mcp add context7 npx @upstash/context7-mcp
 call gemini mcp add playwright-browser npx @playwright/mcp
@@ -49,13 +51,16 @@ echo ✅ 복구 완료!
 echo.
 echo 📝 다음 단계:
 echo    1. 새로운 터미널을 열어주세요
-echo    2. 'gemini' 명령어로 실행하세요
-echo    3. API 503 오류가 나오면 1-2분 기다린 후 재시도하세요
+echo    2. 'gemini' 명령어로 실행하거나
+echo    3. 'start_gemini_with_shell.bat' 파일을 실행하세요 (권장)
+echo    4. API 503 오류가 나오면 1-2분 기다린 후 재시도하세요
 echo.
 echo 💡 참고사항:
 echo    - 올바른 도구명: read_multiple_files (read_many_files 아님)
-echo    - Shell 명령어 실행 도구들이 추가되었습니다
+echo    - Shell 명령어 실행 도구들이 보안 설정과 함께 추가되었습니다
+echo    - Python 스크립트 실행이 가능합니다
 echo    - 모든 설정이 초기화되었습니다
+echo    - start_gemini_with_shell.bat 사용을 권장합니다
 echo ============================================================
 echo.
 pause

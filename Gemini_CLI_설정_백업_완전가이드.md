@@ -42,23 +42,25 @@ gemini mcp add filesystem npx @modelcontextprotocol/server-filesystem "C:\Users\
 - `list_directory` - 디렉토리 목록
 - `search_files` - 파일 검색
 
-#### 2. Shell 명령어 서버 #1
+#### 2. Shell 명령어 서버 (보안 설정 포함) ⭐
 ```bash
 # 설치
 npm install -g @mkusaka/mcp-shell-server
-
-# 추가  
-gemini mcp add shell npx @mkusaka/mcp-shell-server
-```
-
-#### 3. Shell 명령어 서버 #2
-```bash
-# 설치
 npm install -g shell-command-mcp
 
-# 추가
-gemini mcp add shell-command npx shell-command-mcp
+# 방법 1: 기본 명령어만 허용 (권장)
+set ALLOWED_COMMANDS=python,py,dir,type,echo,cd,ls,cat,pwd,python3,pip,npm,node,git
+gemini mcp add shell-secure npx shell-command-mcp
+
+# 방법 2: 모든 명령어 허용 (주의: 보안 위험)
+set ALLOWED_COMMANDS=all  
+gemini mcp add shell-all npx @mkusaka/mcp-shell-server
 ```
+
+**⚠️ 중요 사항:**
+- Shell 서버는 기본적으로 모든 명령어가 차단됨 (`allowed_commands: (none)`)
+- 환경변수 `ALLOWED_COMMANDS`를 반드시 설정해야 함
+- Python 스크립트 실행을 위해서는 최소한 `python,py` 명령어 허용 필요
 
 #### 4. Context7 서버
 ```bash
@@ -75,22 +77,100 @@ gemini mcp add playwright-browser npx @playwright/mcp
 gemini mcp add memory-bank npx @modelcontextprotocol/server-memory
 ```
 
-### 완전한 설정 복원 스크립트
+### 완전한 설정 복원 스크립트 (업데이트됨)
 ```bash
-# 모든 MCP 서버 설치
+# 1. 모든 MCP 서버 설치
 npm install -g @google/gemini-cli
 npm install -g @modelcontextprotocol/server-filesystem@latest
 npm install -g @mkusaka/mcp-shell-server
 npm install -g shell-command-mcp
 
-# MCP 서버 추가
+# 2. MCP 서버 추가 (파일시스템)
 gemini mcp add filesystem npx @modelcontextprotocol/server-filesystem "C:\Users\user\Claude-Workspace"
-gemini mcp add shell npx @mkusaka/mcp-shell-server
-gemini mcp add shell-command npx shell-command-mcp
+
+# 3. Shell 서버 추가 (환경변수와 함께)
+set ALLOWED_COMMANDS=python,py,dir,type,echo,cd,ls,cat,pwd,python3,pip,npm,node,git
+gemini mcp add shell-secure npx shell-command-mcp
+
+set ALLOWED_COMMANDS=all
+gemini mcp add shell-all npx @mkusaka/mcp-shell-server
+
+# 4. 기타 서버 추가
 gemini mcp add context7 npx @upstash/context7-mcp
 gemini mcp add playwright-browser npx @playwright/mcp
 gemini mcp add memory-bank npx @modelcontextprotocol/server-memory
 ```
+
+---
+
+## 🚀 전용 실행 스크립트 (권장)
+
+환경변수 설정의 복잡성을 피하고 안전하게 Gemini CLI를 실행할 수 있는 전용 배치 파일들입니다.
+
+### 1. 안전한 실행 스크립트
+**파일:** `start_gemini_with_shell.bat`
+```batch
+@echo off
+chcp 65001 >nul
+
+echo ============================================================
+echo       Gemini CLI with Shell Commands Enabled
+echo ============================================================
+echo.
+
+REM 환경변수 설정 - Python과 기본 명령어들 허용
+set ALLOWED_COMMANDS=python,py,dir,type,echo,cd,ls,cat,pwd,python3,pip,npm,node,git,mkdir,rmdir,copy,move,del
+
+echo 🔧 Shell 명령어 허용 목록:
+echo    %ALLOWED_COMMANDS%
+echo.
+
+echo 🚀 Gemini CLI 시작 중...
+echo    (Shell 명령어 실행이 가능합니다)
+echo.
+
+REM Gemini CLI 실행
+gemini
+
+echo.
+echo Gemini CLI가 종료되었습니다.
+pause
+```
+
+### 2. 무제한 실행 스크립트 (주의 필요)
+**파일:** `start_gemini_unrestricted.bat`
+```batch
+@echo off
+chcp 65001 >nul
+
+echo ============================================================
+echo       Gemini CLI - Unrestricted Shell Access
+echo ============================================================
+echo.
+
+REM 모든 명령어 허용 (주의: 보안 위험 있음)
+set ALLOWED_COMMANDS=all
+
+echo ⚠️  경고: 모든 Shell 명령어가 허용됩니다
+echo    보안에 주의하여 사용하세요
+echo.
+
+echo 🚀 Gemini CLI 시작 중...
+echo.
+
+REM Gemini CLI 실행
+gemini
+
+echo.
+echo Gemini CLI가 종료되었습니다.
+pause
+```
+
+### 사용 방법
+1. 해당 `.bat` 파일을 더블클릭하여 실행
+2. 환경변수가 자동으로 설정됨
+3. Gemini CLI가 Shell 명령어와 함께 시작됨
+4. Python 스크립트 실행 가능
 
 ---
 
@@ -142,6 +222,29 @@ gemini -m gemini-pro
 # 올바른 워크스페이스 경로 설정
 gemini mcp remove filesystem
 gemini mcp add filesystem npx @modelcontextprotocol/server-filesystem "C:\Users\user\Claude-Workspace"
+```
+
+#### 5. Shell 명령어 실행 차단 오류
+**원인:** `allowed_commands: (none)` - 모든 Shell 명령어가 차단된 상태
+
+**증상:**
+- "실행할 명령어를 허용하지 않습니다" 오류
+- `echo` 명령어도 허용되지 않음
+- 보안 설정에서 명령어가 없는 것으로 표시
+
+**해결방법:**
+```bash
+# 1. 기존 shell 서버 제거
+gemini mcp remove shell
+gemini mcp remove shell-command
+
+# 2. 허용된 명령어와 함께 재설정
+set ALLOWED_COMMANDS=python,py,dir,type,echo,cd,ls,cat,pwd,python3,pip,npm,node,git
+gemini mcp add shell-secure npx shell-command-mcp
+
+# 3. 모든 명령어 허용 (테스트용)
+set ALLOWED_COMMANDS=all
+gemini mcp add shell-all npx @mkusaka/mcp-shell-server
 ```
 
 ---
@@ -268,18 +371,28 @@ gemini -l
 ## ⚠️ 중요 사항
 
 1. **도구 이름 주의**: `read_many_files` ❌ → `read_multiple_files` ✅
-2. **워크스페이스 경로**: 반드시 정확한 경로 설정 필요
-3. **API 한도**: 무료 사용량 한도 고려
-4. **정기 백업**: 이 설정 파일을 정기적으로 백업
-5. **보안**: 민감한 정보가 포함된 디렉토리 접근 주의
+2. **Shell 명령어 보안**: 기본값은 `allowed_commands: (none)` - 반드시 환경변수 설정 필요
+3. **워크스페이스 경로**: 반드시 정확한 경로 설정 필요  
+4. **권장 실행 방법**: `start_gemini_with_shell.bat` 사용으로 복잡한 설정 회피
+5. **API 한도**: 무료 사용량 한도 고려
+6. **정기 백업**: 이 설정 파일을 정기적으로 백업
+7. **보안**: 민감한 정보가 포함된 디렉토리 접근 주의
+8. **무제한 모드 주의**: `ALLOWED_COMMANDS=all` 사용 시 보안 위험 존재
 
 ---
 
 ## 🔄 업데이트 이력
 
-- **2025-09-02**: 초기 문서 작성 및 완전한 설정 가이드 완성
-- Tool Registry 동기화 문제 해결 방법 추가
-- 모든 작동하는 MCP 서버 구성 정리
+- **2025-09-02 v1.0**: 초기 문서 작성 및 완전한 설정 가이드 완성
+  - Tool Registry 동기화 문제 해결 방법 추가
+  - 모든 작동하는 MCP 서버 구성 정리
+  
+- **2025-09-02 v1.1**: Shell 명령어 보안 설정 완전 해결
+  - `allowed_commands: (none)` 문제 해결 방법 추가
+  - 환경변수 기반 Shell 서버 구성 가이드 작성
+  - 전용 실행 스크립트 (`start_gemini_with_shell.bat`) 추가
+  - 무제한 모드 스크립트 (`start_gemini_unrestricted.bat`) 추가
+  - Shell 명령어 보안 모범 사례 문서화
 
 ---
 
