@@ -1306,13 +1306,29 @@
             const beforeCount = partners.length;
             const originalPartners = [...partners];
             
-            // 문자열과 숫자 ID 모두 처리
+            // ID 비교 로직 개선 (정확한 매칭만)
             partners = partners.filter(p => {
-                const match = (String(p.id) === String(id));
-                if (match) {
-                    console.log('삭제되는 거래처:', p);
+                const partnerId = p.id;
+                const targetId = id;
+                
+                // 빈 값이나 undefined 체크
+                if (!partnerId || !targetId) {
+                    console.log(`⚠️ 빈 ID 발견: 거래처ID=${partnerId}, 대상ID=${targetId}`);
+                    return true; // 빈 ID는 삭제하지 않음
                 }
-                return !match;
+                
+                // 정확한 비교
+                const exactMatch = (partnerId === targetId);
+                const stringMatch = (String(partnerId) === String(targetId) && String(partnerId) !== "undefined" && String(targetId) !== "undefined");
+                const shouldDelete = exactMatch || stringMatch;
+                
+                console.log(`거래처 ${p.name}: ID="${partnerId}"(${typeof partnerId}), 찾는ID="${targetId}"(${typeof targetId}), 삭제=${shouldDelete}`);
+                
+                if (shouldDelete) {
+                    console.log('🗑️ 삭제되는 거래처:', p);
+                }
+                
+                return !shouldDelete;
             });
             
             orders = orders.filter(o => String(o.partnerId) !== String(id));
@@ -2478,9 +2494,18 @@
         function addSampleData() {
             console.log('샘플 데이터 생성 중...');
             
+            // 이미 샘플 데이터가 있는지 확인
+            if (partners.some(p => p.name === '테스트 거래처')) {
+                console.log('샘플 데이터가 이미 존재함 - 생성 건너뜀');
+                return;
+            }
+            
+            // 고유한 ID 생성 (시간 기반)
+            const uniqueId = 'sample_' + Date.now();
+            
             // 샘플 거래처 추가
             const samplePartner = {
-                id: generateId(),
+                id: uniqueId,
                 name: '테스트 거래처',
                 phone: '010-1234-5678',
                 address: '서울시 강남구',
