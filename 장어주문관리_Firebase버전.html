@@ -1283,30 +1283,63 @@
             }
         }
 
-        // 즉시 삭제 함수 (100% 확실)
+        // 즉시 삭제 함수 (디버깅 강화)
         function immediateDeletePartner(id, name) {
+            console.log('=== 삭제 함수 호출됨 ===', id, name);
+            
+            if (!id) {
+                console.error('ID가 없습니다!');
+                alert('오류: 거래처 ID가 없습니다.');
+                return;
+            }
+            
             if (!confirm(`${name} 거래처를 정말로 삭제하시겠습니까?`)) {
+                console.log('사용자가 삭제를 취소함');
                 return;
             }
             
             console.log('=== 즉시 삭제 시작 ===', name, id);
+            console.log('삭제 전 partners 배열:', partners);
+            console.log('삭제할 ID로 검색한 거래처:', partners.find(p => p.id === id));
             
-            // 1. 배열에서 즉시 제거
+            // 1. 배열에서 즉시 제거 (ID 타입 문제 해결)
             const beforeCount = partners.length;
-            partners = partners.filter(p => p.id !== id);
-            orders = orders.filter(o => o.partnerId !== id);
-            advances = advances.filter(a => a.partnerId !== id);
-            payments = payments.filter(p => p.partnerId !== id);
-            receipts = receipts.filter(r => r.partnerId !== id);
+            const originalPartners = [...partners];
+            
+            // 문자열과 숫자 ID 모두 처리
+            partners = partners.filter(p => {
+                const match = (String(p.id) === String(id));
+                if (match) {
+                    console.log('삭제되는 거래처:', p);
+                }
+                return !match;
+            });
+            
+            orders = orders.filter(o => String(o.partnerId) !== String(id));
+            advances = advances.filter(a => String(a.partnerId) !== String(id));
+            payments = payments.filter(p => String(p.partnerId) !== String(id));
+            receipts = receipts.filter(r => String(r.partnerId) !== String(id));
             
             console.log(`거래처 수: ${beforeCount} -> ${partners.length}`);
+            console.log('삭제 후 partners 배열:', partners);
+            
+            if (beforeCount === partners.length) {
+                console.error('❌ 삭제가 실행되지 않았습니다!');
+                alert('삭제 실패: 거래처를 찾을 수 없습니다.');
+                return;
+            }
             
             // 2. 로컬 저장
-            localStorage.setItem('eel_partners', JSON.stringify(partners));
-            localStorage.setItem('eel_orders', JSON.stringify(orders));
-            localStorage.setItem('eel_advances', JSON.stringify(advances));
-            localStorage.setItem('eel_payments', JSON.stringify(payments));
-            localStorage.setItem('eel_receipts', JSON.stringify(receipts));
+            try {
+                localStorage.setItem('eel_partners', JSON.stringify(partners));
+                localStorage.setItem('eel_orders', JSON.stringify(orders));
+                localStorage.setItem('eel_advances', JSON.stringify(advances));
+                localStorage.setItem('eel_payments', JSON.stringify(payments));
+                localStorage.setItem('eel_receipts', JSON.stringify(receipts));
+                console.log('✅ localStorage 저장 완료');
+            } catch (error) {
+                console.error('❌ localStorage 저장 실패:', error);
+            }
             
             // 3. Firebase에서도 삭제 시도
             if (isOnline && window.firebaseModules) {
@@ -1318,11 +1351,20 @@
                 }
             }
             
-            // 4. UI 강제 업데이트 (새로고침 없이)
-            updatePartnersList();
-            updateDashboardStats();
-            updateDashboardContent();
-            updateSelects();
+            // 4. UI 강제 업데이트
+            console.log('UI 업데이트 시작...');
+            try {
+                updatePartnersList();
+                console.log('✅ updatePartnersList 완료');
+                updateDashboardStats();
+                console.log('✅ updateDashboardStats 완료');
+                updateDashboardContent();
+                console.log('✅ updateDashboardContent 완료');
+                updateSelects();
+                console.log('✅ updateSelects 완료');
+            } catch (error) {
+                console.error('❌ UI 업데이트 실패:', error);
+            }
             
             console.log('=== 즉시 삭제 완료 ===');
             alert('거래처가 삭제되었습니다.');
