@@ -1308,8 +1308,24 @@
             localStorage.setItem('eel_payments', JSON.stringify(payments));
             localStorage.setItem('eel_receipts', JSON.stringify(receipts));
             
-            // 3. 화면 즉시 새로고침
-            location.reload();
+            // 3. Firebase에서도 삭제 시도
+            if (isOnline && window.firebaseModules) {
+                try {
+                    deleteFromFirebase(collections.partners, id);
+                    console.log('Firebase 삭제 요청 전송');
+                } catch (error) {
+                    console.warn('Firebase 삭제 실패:', error);
+                }
+            }
+            
+            // 4. UI 강제 업데이트 (새로고침 없이)
+            updatePartnersList();
+            updateDashboardStats();
+            updateDashboardContent();
+            updateSelects();
+            
+            console.log('=== 즉시 삭제 완료 ===');
+            alert('거래처가 삭제되었습니다.');
         }
 
         // 간단한 거래처 삭제 (강제 실행)
