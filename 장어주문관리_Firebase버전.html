@@ -267,6 +267,115 @@
             margin: 10px 0;
         }
 
+        .partner-calendar {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .partner-calendar-header {
+            background: #10b981;
+            color: white;
+            padding: 10px 15px;
+            font-weight: 600;
+        }
+
+        .partner-calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+        }
+
+        .calendar-day-header {
+            background: #f8fafc;
+            padding: 8px;
+            text-align: center;
+            font-weight: 600;
+            border: 1px solid #e5e7eb;
+            font-size: 12px;
+        }
+
+        .partner-calendar-cell {
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #e5e7eb;
+            cursor: pointer;
+            min-height: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .partner-calendar-cell:hover {
+            background: #f3f4f6;
+        }
+
+        .partner-calendar-cell.selected {
+            background: #10b981;
+            color: white;
+        }
+
+        .partner-calendar-cell.has-price {
+            background: #dcfce7;
+        }
+
+        .partner-calendar-cell.has-price.selected {
+            background: #10b981;
+            color: white;
+        }
+
+        .partner-calendar-cell.other-month {
+            color: #9ca3af;
+            background: #f9fafb;
+        }
+
+        .calendar-price-badge {
+            font-size: 9px;
+            background: #10b981;
+            color: white;
+            padding: 1px 3px;
+            border-radius: 2px;
+            margin-top: 1px;
+        }
+
+        .partner-calendar-cell.selected .calendar-price-badge {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .price-input-section {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 6px;
+            padding: 10px;
+            margin: 10px;
+        }
+
+        .price-input-section h4 {
+            color: #0369a1;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .price-input-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .price-input-group input {
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .price-input-group .btn {
+            margin: 0;
+            padding: 8px 12px;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -278,6 +387,15 @@
             
             .stats-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .price-input-group {
+                flex-direction: column;
+            }
+
+            .price-input-group input,
+            .price-input-group .btn {
+                width: 100%;
             }
         }
     </style>
@@ -351,7 +469,7 @@
                     <h3>새 선주문 추가</h3>
                     <div class="form-group">
                         <label>거래처</label>
-                        <select id="orderPartner">
+                        <select id="orderPartner" onchange="showPartnerCalendar('order')">
                             <option value="">거래처를 선택하세요</option>
                         </select>
                     </div>
@@ -376,6 +494,9 @@
                         <textarea id="orderMemo" placeholder="메모를 입력하세요"></textarea>
                     </div>
                     <button class="btn" onclick="addOrder()">선주문 추가</button>
+                    <div id="orderPartnerCalendar" class="partner-calendar" style="display: none;">
+                        <!-- 거래처별 달력이 여기에 표시됩니다 -->
+                    </div>
                 </div>
                 <div id="ordersList">
                     <div class="loading">선주문 목록 로딩 중...</div>
@@ -1145,9 +1266,8 @@
             receipts = receipts.filter(receipt => receipt.partnerId !== id);
             partners = partners.filter(p => p.id !== id);
             
-            if (!isOnline) {
-                saveToLocal();
-            }
+            // 항상 로컬 저장소에도 저장 (Firebase와 동기화)
+            saveToLocal();
             
             updateAllLists();
             alert('거래처가 삭제되었습니다.');
@@ -1508,6 +1628,10 @@
             document.getElementById('orderPrice').value = '';
             document.getElementById('orderTotal').value = '';
             document.getElementById('orderMemo').value = '';
+            
+            // 달력 숨기기
+            const calendarContainer = document.getElementById('orderPartnerCalendar');
+            if (calendarContainer) calendarContainer.style.display = 'none';
 
             updateOrdersList();
             updateDashboard();
@@ -1754,6 +1878,203 @@
             infoContainer.style.display = 'block';
         }
 
+        // 거래처별 달력 표시
+        function showPartnerCalendar(type) {
+            const partnerId = document.getElementById('orderPartner').value;
+            const calendarContainer = document.getElementById('orderPartnerCalendar');
+            
+            if (!partnerId || !calendarContainer) {
+                if (calendarContainer) calendarContainer.style.display = 'none';
+                return;
+            }
+            
+            const partner = partners.find(p => p.id === partnerId);
+            if (!partner) {
+                calendarContainer.style.display = 'none';
+                return;
+            }
+            
+            renderPartnerCalendar(partnerId, partner.name, calendarContainer);
+            calendarContainer.style.display = 'block';
+        }
+
+        // 거래처별 달력 렌더링
+        function renderPartnerCalendar(partnerId, partnerName, container) {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth();
+            
+            let calendarHTML = `
+                <div class="partner-calendar-header">
+                    ${partnerName} - ${year}년 ${month + 1}월 가격 달력
+                </div>
+                <div class="partner-calendar-grid">
+            `;
+            
+            // 요일 헤더
+            const days = ['일', '월', '화', '수', '목', '금', '토'];
+            days.forEach(day => {
+                calendarHTML += `<div class="calendar-day-header">${day}</div>`;
+            });
+            
+            // 달력 날짜들
+            const firstDay = new Date(year, month, 1);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+            
+            for (let week = 0; week < 6; week++) {
+                for (let day = 0; day < 7; day++) {
+                    const cellDate = new Date(startDate);
+                    cellDate.setDate(startDate.getDate() + (week * 7) + day);
+                    
+                    const isCurrentMonth = cellDate.getMonth() === month;
+                    const dateKey = formatDateKey(cellDate);
+                    const priceKey = `${partnerId}_${dateKey}`;
+                    const priceInfo = partnerPrices[priceKey];
+                    
+                    let cellClass = 'partner-calendar-cell';
+                    if (!isCurrentMonth) cellClass += ' other-month';
+                    if (priceInfo) cellClass += ' has-price';
+                    
+                    const priceBadge = priceInfo ? 
+                        `<div class="calendar-price-badge">${formatNumber(priceInfo.price)}원</div>` : '';
+                    
+                    calendarHTML += `
+                        <div class="${cellClass}" onclick="selectPartnerCalendarDate('${partnerId}', '${dateKey}', this)">
+                            <div>${cellDate.getDate()}</div>
+                            ${priceBadge}
+                        </div>
+                    `;
+                }
+            }
+            
+            calendarHTML += `</div>`;
+            
+            // 가격 입력 섹션
+            calendarHTML += `
+                <div class="price-input-section" id="partnerPriceInput_${partnerId}" style="display: none;">
+                    <h4>📅 <span id="selectedPartnerDate_${partnerId}">날짜 선택</span> 가격 설정</h4>
+                    <div class="price-input-group">
+                        <input type="number" id="partnerPrice_${partnerId}" placeholder="단가 (원/kg)" min="0" step="100">
+                        <input type="text" id="partnerPriceNote_${partnerId}" placeholder="메모 (선택)" maxlength="50">
+                        <button class="btn" onclick="setPartnerPrice('${partnerId}')">가격 설정</button>
+                        <button class="btn btn-danger" onclick="clearPartnerPrice('${partnerId}')">가격 삭제</button>
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = calendarHTML;
+        }
+
+        // 거래처 달력 날짜 선택
+        function selectPartnerCalendarDate(partnerId, dateKey, element) {
+            // 이전 선택 제거
+            const container = element.closest('.partner-calendar');
+            container.querySelectorAll('.partner-calendar-cell.selected').forEach(cell => {
+                cell.classList.remove('selected');
+            });
+            
+            // 새 선택 추가
+            element.classList.add('selected');
+            
+            // 가격 입력 섹션 표시
+            const priceInputSection = document.getElementById(`partnerPriceInput_${partnerId}`);
+            const selectedDateSpan = document.getElementById(`selectedPartnerDate_${partnerId}`);
+            const priceInput = document.getElementById(`partnerPrice_${partnerId}`);
+            const priceNoteInput = document.getElementById(`partnerPriceNote_${partnerId}`);
+            
+            const [year, month, day] = dateKey.split('-');
+            const selectedDate = new Date(year, month - 1, day);
+            selectedDateSpan.textContent = formatDate(selectedDate.toISOString());
+            priceInputSection.style.display = 'block';
+            
+            // 기존 가격 정보 로드
+            const priceKey = `${partnerId}_${dateKey}`;
+            const priceInfo = partnerPrices[priceKey];
+            if (priceInfo) {
+                priceInput.value = priceInfo.price;
+                priceNoteInput.value = priceInfo.note || '';
+            } else {
+                priceInput.value = '';
+                priceNoteInput.value = '';
+            }
+            
+            // 선택한 가격을 단가 필드에 자동 입력
+            if (priceInfo && priceInfo.price) {
+                document.getElementById('orderPrice').value = priceInfo.price;
+                // 총액 계산
+                const quantity = parseFloat(document.getElementById('orderQuantity').value) || 0;
+                const total = quantity * priceInfo.price;
+                document.getElementById('orderTotal').value = total > 0 ? formatNumber(total) + '원' : '';
+            }
+        }
+
+        // 거래처별 가격 설정
+        async function setPartnerPrice(partnerId) {
+            const selectedCell = document.querySelector('.partner-calendar-cell.selected');
+            if (!selectedCell) {
+                alert('날짜를 선택하세요.');
+                return;
+            }
+            
+            const dateKey = selectedCell.onclick.toString().match(/'([^']+)'/g)[1].replace(/'/g, '');
+            const price = parseFloat(document.getElementById(`partnerPrice_${partnerId}`).value);
+            const note = document.getElementById(`partnerPriceNote_${partnerId}`).value.trim();
+            
+            if (!price || price <= 0) {
+                alert('올바른 단가를 입력하세요.');
+                return;
+            }
+            
+            const priceKey = `${partnerId}_${dateKey}`;
+            const priceData = {
+                price: price,
+                note: note,
+                updatedAt: new Date().toISOString()
+            };
+            
+            partnerPrices[priceKey] = priceData;
+            
+            if (isOnline) {
+                await saveToFirebase(collections.partnerPrices, priceData, priceKey);
+            } else {
+                saveToLocal();
+            }
+            
+            showPartnerCalendar('order'); // 달력 재렌더링
+            alert('가격이 설정되었습니다.');
+        }
+
+        // 거래처별 가격 삭제
+        async function clearPartnerPrice(partnerId) {
+            const selectedCell = document.querySelector('.partner-calendar-cell.selected');
+            if (!selectedCell) {
+                alert('날짜를 선택하세요.');
+                return;
+            }
+            
+            const dateKey = selectedCell.onclick.toString().match(/'([^']+)'/g)[1].replace(/'/g, '');
+            const priceKey = `${partnerId}_${dateKey}`;
+            
+            if (!partnerPrices[priceKey]) {
+                alert('설정된 가격이 없습니다.');
+                return;
+            }
+            
+            if (confirm('이 날짜의 가격 정보를 삭제하시겠습니까?')) {
+                delete partnerPrices[priceKey];
+                
+                if (isOnline) {
+                    await deleteFromFirebase(collections.partnerPrices, priceKey);
+                } else {
+                    saveToLocal();
+                }
+                
+                showPartnerCalendar('order'); // 달력 재렌더링
+                alert('가격이 삭제되었습니다.');
+            }
+        }
+
         // 외상 표시/숨김 토글
         async function toggleAdvanceVisibility(id) {
             const advance = advances.find(a => a.id === id);
@@ -1781,9 +2102,8 @@
             
             orders = orders.filter(o => o.id !== id);
             
-            if (!isOnline) {
-                saveToLocal();
-            }
+            // 항상 로컬 저장소에도 저장 (Firebase와 동기화)
+            saveToLocal();
             
             updateOrdersList();
             updateDashboard();
@@ -1800,9 +2120,8 @@
             
             advances = advances.filter(a => a.id !== id);
             
-            if (!isOnline) {
-                saveToLocal();
-            }
+            // 항상 로컬 저장소에도 저장 (Firebase와 동기화)
+            saveToLocal();
             
             updateAdvancesList();
             updateDashboard();
@@ -1819,9 +2138,8 @@
             
             payments = payments.filter(p => p.id !== id);
             
-            if (!isOnline) {
-                saveToLocal();
-            }
+            // 항상 로컬 저장소에도 저장 (Firebase와 동기화)
+            saveToLocal();
             
             updatePaymentsList();
             updateDashboard();
@@ -1838,9 +2156,8 @@
             
             receipts = receipts.filter(r => r.id !== id);
             
-            if (!isOnline) {
-                saveToLocal();
-            }
+            // 항상 로컬 저장소에도 저장 (Firebase와 동기화)
+            saveToLocal();
             
             updateReceiptsList();
             updateDashboard();
