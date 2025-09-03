@@ -1234,7 +1234,7 @@
                     </div>
                     <div>
                         <button class="btn" onclick="editPartner('${partner.id}')">수정</button>
-                        <button class="btn btn-danger" onclick="deletePartner('${partner.id}')">삭제</button>
+                        <button class="btn btn-danger" onclick="forceDeletePartner('${partner.id}')">삭제</button>
                     </div>
                 `;
                 container.appendChild(partnerDiv);
@@ -1281,6 +1281,38 @@
                 console.error('거래처 수정 오류:', error);
                 alert('거래처 수정 중 오류가 발생했습니다.');
             }
+        }
+
+        // 간단한 거래처 삭제 (강제 실행)
+        function forceDeletePartner(id) {
+            const partner = partners.find(p => p.id === id);
+            if (!partner) {
+                alert('거래처를 찾을 수 없습니다.');
+                return;
+            }
+            
+            if (!confirm(`${partner.name} 거래처를 삭제하시겠습니까?`)) {
+                return;
+            }
+            
+            console.log('강제 삭제 시작:', partner.name);
+            
+            // 로컬 배열에서 즉시 제거
+            partners = partners.filter(p => p.id !== id);
+            orders = orders.filter(o => o.partnerId !== id);
+            advances = advances.filter(a => a.partnerId !== id);
+            payments = payments.filter(p => p.partnerId !== id);
+            receipts = receipts.filter(r => r.partnerId !== id);
+            
+            // 로컬 저장
+            saveToLocal();
+            
+            // UI 강제 업데이트
+            updatePartnersList();
+            updateDashboard();
+            
+            console.log('강제 삭제 완료');
+            alert('거래처가 삭제되었습니다.');
         }
 
         // 거래처 삭제
@@ -1362,8 +1394,14 @@
                 saveToLocal();
                 console.log('localStorage 업데이트 완료');
                 
-                // UI 업데이트
-                updateAllLists();
+                // UI 업데이트 (각각 개별적으로 호출)
+                updatePartnersList();
+                updateOrdersList();
+                updateAdvancesList();
+                updatePaymentsList();
+                updateReceiptsList();
+                updateDashboard();
+                updateHistoryList();
                 console.log('UI 업데이트 완료');
                 
                 alert('거래처가 삭제되었습니다.');
@@ -2292,9 +2330,32 @@
 
             // 초기 데이터 로드 (로컬 먼저, 그다음 Firebase)
             console.log('페이지 로드 완료 - 데이터 초기화 시작');
-            loadLocalData(); // 먼저 로컬 데이터 로드하여 즉시 표시
-            updateAllLists(); // UI 즉시 업데이트
-            loadFirebaseData(); // 그 다음 Firebase 데이터로 동기화
+            
+            // 연결 상태 표시
+            const statusElement = document.querySelector('.connection-status span');
+            if (statusElement) {
+                statusElement.textContent = '데이터 로드 중...';
+            }
+            
+            // 로컬 데이터 먼저 로드
+            loadLocalData();
+            console.log('로컬 데이터 로드 후 partners 수:', partners.length);
+            
+            // UI 즉시 업데이트
+            updateAllLists();
+            
+            // Firebase 데이터 로드 (비동기)
+            loadFirebaseData().then(() => {
+                console.log('Firebase 데이터 동기화 완료');
+                if (statusElement) {
+                    statusElement.textContent = isOnline ? 'Firebase 연결됨' : '오프라인 모드';
+                }
+            }).catch((error) => {
+                console.error('Firebase 동기화 실패:', error);
+                if (statusElement) {
+                    statusElement.textContent = '오프라인 모드 (Firebase 연결 실패)';
+                }
+            });
         });
     </script>
 </body>
