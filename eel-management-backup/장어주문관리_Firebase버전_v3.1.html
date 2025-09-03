@@ -1,0 +1,1880 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐍 장어 주문관리 시스템 - Firebase 클라우드 버전</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #e8f5e8 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .connection-status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .status-connected {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-disconnected {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .status-loading {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .tab.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .tab:hover:not(.active) {
+            background: #f3f4f6;
+        }
+
+        .content {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .btn {
+            background: #10b981;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #059669;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .grid-2 {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            border-left: 4px solid #10b981;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .partner-item {
+            background: #f8fafc;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .partner-info {
+            background: #e0f2fe;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #0ea5e9;
+        }
+
+        .quick-price-input {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .dashboard-calendar {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .dashboard-calendar-header {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding: 8px;
+            background: #3b82f6;
+            color: white;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+
+        .dashboard-calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+        }
+
+        .dashboard-calendar-cell {
+            padding: 6px;
+            text-align: center;
+            border: 1px solid #e5e7eb;
+            font-size: 10px;
+            min-height: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .dashboard-calendar-cell.has-price {
+            background: #dcfce7;
+        }
+
+        .dashboard-calendar-cell.other-month {
+            color: #9ca3af;
+            background: #f9fafb;
+        }
+
+        .dashboard-price-badge {
+            font-size: 8px;
+            background: #10b981;
+            color: white;
+            padding: 1px 2px;
+            border-radius: 2px;
+            margin-top: 1px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div id="connectionStatus" class="connection-status status-loading">
+                🔄 Firebase 연결 확인 중...
+            </div>
+            <h1>🐍 장어 주문관리 시스템</h1>
+            <p>Firebase 클라우드 동기화 버전 - 모든 기기에서 동일한 데이터</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('dashboard')">📊 대시보드</button>
+            <button class="tab" onclick="showTab('partners')">👥 거래처 관리</button>
+            <button class="tab" onclick="showTab('orders')">📦 선주문</button>
+            <button class="tab" onclick="showTab('advances')">💳 외상관리</button>
+            <button class="tab" onclick="showTab('payments')">💰 입금</button>
+            <button class="tab" onclick="showTab('receipts')">📥 입고</button>
+            <button class="tab" onclick="showTab('history')">📋 거래내역</button>
+        </div>
+
+        <!-- 대시보드 -->
+        <div id="dashboard" class="content active">
+            <h2>📊 대시보드</h2>
+            <div id="dashboardStats" class="stats-grid">
+                <div class="loading">데이터 로딩 중...</div>
+            </div>
+            <div id="dashboardContent">
+                <div class="loading">거래처 정보 로딩 중...</div>
+            </div>
+        </div>
+
+        <!-- 거래처 관리 -->
+        <div id="partners" class="content">
+            <h2>👥 거래처 관리</h2>
+            <div class="grid grid-2">
+                <div>
+                    <h3>새 거래처 추가</h3>
+                    <div class="form-group">
+                        <label>거래처명</label>
+                        <input type="text" id="partnerName" placeholder="거래처명을 입력하세요">
+                    </div>
+                    <div class="form-group">
+                        <label>연락처</label>
+                        <input type="text" id="partnerPhone" placeholder="연락처를 입력하세요">
+                    </div>
+                    <div class="form-group">
+                        <label>주소</label>
+                        <textarea id="partnerAddress" placeholder="주소를 입력하세요"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>메모</label>
+                        <textarea id="partnerMemo" placeholder="메모를 입력하세요"></textarea>
+                    </div>
+                    <button class="btn" onclick="addPartner()">거래처 추가</button>
+                </div>
+                <div id="partnersList">
+                    <div class="loading">거래처 목록 로딩 중...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 선주문 -->
+        <div id="orders" class="content">
+            <h2>📦 선주문 관리</h2>
+            <div class="grid grid-2">
+                <div>
+                    <h3>새 선주문 추가</h3>
+                    <div class="form-group">
+                        <label>거래처</label>
+                        <select id="orderPartner">
+                            <option value="">거래처를 선택하세요</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>주문날짜</label>
+                        <input type="date" id="orderDate">
+                    </div>
+                    <div class="form-group">
+                        <label>수량 (kg)</label>
+                        <input type="number" id="orderQuantity" placeholder="수량을 입력하세요">
+                    </div>
+                    <div class="form-group">
+                        <label>단가 (원/kg)</label>
+                        <input type="number" id="orderPrice" placeholder="단가를 입력하세요">
+                    </div>
+                    <div class="form-group">
+                        <label>총액</label>
+                        <input type="text" id="orderTotal" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>메모</label>
+                        <textarea id="orderMemo" placeholder="메모를 입력하세요"></textarea>
+                    </div>
+                    <button class="btn" onclick="addOrder()">선주문 추가</button>
+                </div>
+                <div id="ordersList">
+                    <div class="loading">선주문 목록 로딩 중...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 외상관리 -->
+        <div id="advances" class="content">
+            <h2>💳 외상관리</h2>
+            <div class="grid grid-2">
+                <div>
+                    <h3>새 외상 추가</h3>
+                    <div class="form-group">
+                        <label>거래처</label>
+                        <select id="advancePartner">
+                            <option value="">거래처를 선택하세요</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>날짜</label>
+                        <input type="date" id="advanceDate">
+                    </div>
+                    <div class="form-group">
+                        <label>외상금액 (원)</label>
+                        <input type="number" id="advanceAmount" placeholder="외상금액을 입력하세요">
+                    </div>
+                    <div class="form-group">
+                        <label>메모</label>
+                        <textarea id="advanceMemo" placeholder="메모를 입력하세요"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="advanceHidden"> 대시보드에서 숨기기
+                        </label>
+                    </div>
+                    <button class="btn" onclick="addAdvance()">외상 추가</button>
+                </div>
+                <div id="advancesList">
+                    <div class="loading">외상 목록 로딩 중...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 입금 -->
+        <div id="payments" class="content">
+            <h2>💰 입금 관리</h2>
+            <div class="grid grid-2">
+                <div>
+                    <h3>새 입금 추가</h3>
+                    <div class="form-group">
+                        <label>거래처</label>
+                        <select id="paymentPartner" onchange="showPartnerInfo('payment')">
+                            <option value="">거래처를 선택하세요</option>
+                        </select>
+                    </div>
+                    <div id="paymentPartnerInfo" class="partner-info" style="display: none;">
+                        <!-- 거래처 정보가 여기에 표시됩니다 -->
+                    </div>
+                    <div class="form-group">
+                        <label>날짜</label>
+                        <input type="date" id="paymentDate">
+                    </div>
+                    <div class="form-group">
+                        <label>입금액 (원)</label>
+                        <input type="number" id="paymentAmount" placeholder="입금액을 입력하세요">
+                    </div>
+                    <div class="form-group">
+                        <label>메모</label>
+                        <textarea id="paymentMemo" placeholder="메모를 입력하세요"></textarea>
+                    </div>
+                    <button class="btn" onclick="addPayment()">입금 추가</button>
+                </div>
+                <div id="paymentsList">
+                    <div class="loading">입금 목록 로딩 중...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 입고 관리 -->
+        <div id="receipts" class="content">
+            <h2>📥 입고 관리</h2>
+            <div class="grid grid-2">
+                <div>
+                    <h3>새 입고 추가</h3>
+                    <div class="form-group">
+                        <label>거래처</label>
+                        <select id="receiptPartner" onchange="showPartnerInfo('receipt')">
+                            <option value="">거래처를 선택하세요</option>
+                        </select>
+                    </div>
+                    <div id="receiptPartnerInfo" class="partner-info" style="display: none;">
+                        <!-- 거래처 정보가 여기에 표시됩니다 -->
+                    </div>
+                    <div class="form-group">
+                        <label>날짜</label>
+                        <input type="date" id="receiptDate">
+                    </div>
+                    <div class="form-group">
+                        <label>수량 (kg)</label>
+                        <input type="number" id="receiptQuantity" placeholder="수량을 입력하세요">
+                    </div>
+                    <div class="form-group">
+                        <label>메모</label>
+                        <textarea id="receiptMemo" placeholder="메모를 입력하세요"></textarea>
+                    </div>
+                    <button class="btn" onclick="addReceipt()">입고 추가</button>
+                </div>
+                <div id="receiptsList">
+                    <div class="loading">입고 목록 로딩 중...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 거래내역 -->
+        <div id="history" class="content">
+            <h2>📋 거래내역</h2>
+            <div class="form-group">
+                <label>거래처 필터</label>
+                <select id="historyFilter" onchange="updateHistoryList()">
+                    <option value="">전체 거래처</option>
+                </select>
+            </div>
+            <div id="historyList">
+                <div class="loading">거래내역 로딩 중...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK (모듈 방식) -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, addDoc, getDocs, doc, setDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        
+        // Firebase 설정 (실제 jangeo-trade 프로젝트 설정)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCXjZ8Gi5fDBUDzqM29V-BtLluiTECcUQM",
+            authDomain: "jangeo-trade.firebaseapp.com",
+            projectId: "jangeo-trade",
+            storageBucket: "jangeo-trade.firebasestorage.app",
+            messagingSenderId: "783900173125",
+            appId: "1:783900173125:web:d57cbfe31e178d0ba8d42c"
+        };
+
+        // Firebase 초기화
+        let app, db;
+        let isOnline = false;
+
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            isOnline = true;
+            updateConnectionStatus(true);
+            console.log('Firebase 초기화 성공');
+            
+            // 전역 변수로 설정
+            window.db = db;
+            window.isOnline = isOnline;
+            window.firebaseModules = { collection, addDoc, getDocs, doc, setDoc, deleteDoc };
+            
+            // 데이터 로드
+            loadFirebaseData();
+        } catch (error) {
+            console.error('Firebase 초기화 실패:', error);
+            updateConnectionStatus(false);
+            initLocalStorage();
+        }
+    </script>
+
+    <script>
+        // 전역 변수들 (모듈에서 설정됨)
+        let db = window.db;
+        let isOnline = window.isOnline || false;
+
+        // 연결 상태 업데이트
+        function updateConnectionStatus(connected) {
+            const statusElement = document.getElementById('connectionStatus');
+            if (connected) {
+                statusElement.className = 'connection-status status-connected';
+                statusElement.textContent = '🌐 Firebase 클라우드 연결됨 - 실시간 동기화 활성';
+                isOnline = true;
+            } else {
+                statusElement.className = 'connection-status status-disconnected';
+                statusElement.textContent = '🔴 Firebase 연결 실패 - 로컬 저장소 사용';
+                isOnline = false;
+            }
+        }
+
+        // 전역 데이터 변수들
+        let partners = [];
+        let orders = [];
+        let advances = [];
+        let payments = [];
+        let receipts = [];
+        let partnerPrices = {};
+
+        // 컬렉션 참조
+        const collections = {
+            partners: 'partners',
+            orders: 'orders',
+            advances: 'advances',
+            payments: 'payments',
+            receipts: 'receipts',
+            partnerPrices: 'partnerPrices'
+        };
+
+        // Firebase 데이터 로드
+        async function loadFirebaseData() {
+            if (!isOnline || !window.firebaseModules) {
+                loadLocalData();
+                return;
+            }
+
+            try {
+                const { collection, getDocs } = window.firebaseModules;
+                
+                // 모든 컬렉션 병렬 로드
+                const [
+                    partnersSnapshot,
+                    ordersSnapshot,
+                    advancesSnapshot,
+                    paymentsSnapshot,
+                    receiptsSnapshot,
+                    pricesSnapshot
+                ] = await Promise.all([
+                    getDocs(collection(db, collections.partners)),
+                    getDocs(collection(db, collections.orders)),
+                    getDocs(collection(db, collections.advances)),
+                    getDocs(collection(db, collections.payments)),
+                    getDocs(collection(db, collections.receipts)),
+                    getDocs(collection(db, collections.partnerPrices))
+                ]);
+
+                partners = partnersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                orders = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                advances = advancesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                payments = paymentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                receipts = receiptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // 가격 데이터는 객체로 변환
+                partnerPrices = {};
+                pricesSnapshot.docs.forEach(doc => {
+                    partnerPrices[doc.id] = doc.data();
+                });
+
+                console.log('Firebase 데이터 로드 완료');
+                updateAllLists();
+                
+            } catch (error) {
+                console.error('Firebase 데이터 로드 실패:', error);
+                // Firebase 실패 시 localStorage로 폴백
+                loadLocalData();
+            }
+        }
+
+        // Firestore에 데이터 저장
+        async function saveToFirebase(collectionName, data, docId = null) {
+            if (!isOnline || !window.firebaseModules) {
+                return saveToLocal();
+            }
+
+            try {
+                const { collection, addDoc, doc, setDoc } = window.firebaseModules;
+                
+                if (docId) {
+                    await setDoc(doc(db, collectionName, docId), data);
+                } else {
+                    const docRef = await addDoc(collection(db, collectionName), data);
+                    return docRef.id;
+                }
+            } catch (error) {
+                console.error(`${collectionName} 저장 실패:`, error);
+                // Firebase 실패 시 localStorage에 저장
+                saveToLocal();
+            }
+        }
+
+        // Firestore에서 데이터 삭제
+        async function deleteFromFirebase(collectionName, docId) {
+            if (!isOnline || !window.firebaseModules) {
+                return saveToLocal();
+            }
+
+            try {
+                const { doc, deleteDoc } = window.firebaseModules;
+                await deleteDoc(doc(db, collectionName, docId));
+            } catch (error) {
+                console.error(`${collectionName} 삭제 실패:`, error);
+                saveToLocal();
+            }
+        }
+
+        // localStorage 폴백 함수들
+        function initLocalStorage() {
+            loadLocalData();
+        }
+
+        function loadLocalData() {
+            partners = JSON.parse(localStorage.getItem('eel_partners') || '[]');
+            orders = JSON.parse(localStorage.getItem('eel_orders') || '[]');
+            advances = JSON.parse(localStorage.getItem('eel_advances') || '[]');
+            payments = JSON.parse(localStorage.getItem('eel_payments') || '[]');
+            receipts = JSON.parse(localStorage.getItem('eel_receipts') || '[]');
+            partnerPrices = JSON.parse(localStorage.getItem('eel_partnerPrices') || '{}');
+            
+            updateAllLists();
+        }
+
+        function saveToLocal() {
+            localStorage.setItem('eel_partners', JSON.stringify(partners));
+            localStorage.setItem('eel_orders', JSON.stringify(orders));
+            localStorage.setItem('eel_advances', JSON.stringify(advances));
+            localStorage.setItem('eel_payments', JSON.stringify(payments));
+            localStorage.setItem('eel_receipts', JSON.stringify(receipts));
+            localStorage.setItem('eel_partnerPrices', JSON.stringify(partnerPrices));
+        }
+
+        // 유틸리티 함수들
+        function generateId() {
+            return Date.now().toString() + Math.random().toString(36).substr(2, 9);
+        }
+
+        function formatNumber(number) {
+            return Number(number).toLocaleString('ko-KR');
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ko-KR');
+        }
+
+        function formatDateKey(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        // 탭 전환
+        function showTab(tabName) {
+            // 모든 탭과 콘텐츠 비활성화
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.content').forEach(content => content.classList.remove('active'));
+            
+            // 선택된 탭과 콘텐츠 활성화
+            document.querySelector(`[onclick="showTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        // 거래처 추가
+        async function addPartner() {
+            const name = document.getElementById('partnerName').value.trim();
+            const phone = document.getElementById('partnerPhone').value.trim();
+            const address = document.getElementById('partnerAddress').value.trim();
+            const memo = document.getElementById('partnerMemo').value.trim();
+
+            if (!name) {
+                alert('거래처명을 입력하세요.');
+                return;
+            }
+
+            const partner = {
+                name: name,
+                phone: phone,
+                address: address,
+                memo: memo,
+                createdAt: new Date().toISOString()
+            };
+
+            if (isOnline) {
+                const docId = await saveToFirebase(collections.partners, partner);
+                partner.id = docId;
+            } else {
+                partner.id = generateId();
+            }
+
+            partners.push(partner);
+            
+            if (!isOnline) {
+                saveToLocal();
+            }
+
+            // 입력 필드 초기화
+            document.getElementById('partnerName').value = '';
+            document.getElementById('partnerPhone').value = '';
+            document.getElementById('partnerAddress').value = '';
+            document.getElementById('partnerMemo').value = '';
+
+            updatePartnersList();
+            updateSelects();
+            updateDashboard();
+            alert('거래처가 추가되었습니다.');
+        }
+
+        // 모든 목록 업데이트
+        function updateAllLists() {
+            updateDashboard();
+            updatePartnersList();
+            updateOrdersList();
+            updateAdvancesList();
+            updatePaymentsList();
+            updateReceiptsList();
+            updateHistoryList();
+            updateSelects();
+        }
+
+        // 대시보드 업데이트
+        function updateDashboard() {
+            updateDashboardStats();
+            updateDashboardContent();
+        }
+
+        function updateDashboardStats() {
+            const statsContainer = document.getElementById('dashboardStats');
+            
+            // 대시보드용 외상 (숨겨진 것 제외)
+            const visibleAdvances = advances.filter(a => a.hidden !== true);
+            const totalAdvanceAmount = visibleAdvances.reduce((sum, a) => sum + (a.amount || 0), 0);
+            
+            // 총 주문 금액과 수량
+            const totalOrderAmount = orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+            const totalOrderQuantity = orders.reduce((sum, o) => sum + (o.quantity || 0), 0);
+            
+            // 총 입금 금액
+            const totalPaymentAmount = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+            
+            // 총 입고 수량
+            const totalReceiptQuantity = receipts.reduce((sum, r) => sum + (r.quantity || 0), 0);
+            
+            // 실제 줄 돈과 받을 장어
+            const totalAmountToPay = totalOrderAmount + totalAdvanceAmount - totalPaymentAmount;
+            const totalEelToReceive = totalOrderQuantity - totalReceiptQuantity;
+            
+            statsContainer.innerHTML = `
+                <div class="stat-card" style="border-left-color: #ef4444;">
+                    <div class="stat-number" style="color: #ef4444;">${formatNumber(totalAmountToPay)}원</div>
+                    <div>💰 총 줄 돈</div>
+                </div>
+                <div class="stat-card" style="border-left-color: #10b981;">
+                    <div class="stat-number" style="color: #10b981;">${formatNumber(totalEelToReceive)}kg</div>
+                    <div>🐍 총 받을 장어</div>
+                </div>
+                <div class="stat-card" style="border-left-color: #f59e0b;">
+                    <div class="stat-number" style="color: #f59e0b;">${partners.length}개</div>
+                    <div>👥 거래처</div>
+                </div>
+                <div class="stat-card" style="border-left-color: #8b5cf6;">
+                    <div class="stat-number" style="color: #8b5cf6;">${orders.length}건</div>
+                    <div>📦 선주문</div>
+                </div>
+            `;
+        }
+
+        function updateDashboardContent() {
+            const container = document.getElementById('dashboardContent');
+            
+            if (partners.length === 0) {
+                container.innerHTML = '<p>등록된 거래처가 없습니다. 거래처를 먼저 추가해주세요.</p>';
+                return;
+            }
+
+            // 거래처별 데이터 계산
+            const partnerData = partners.map(partner => {
+                // 대시보드에서는 숨겨진 외상 제외
+                const partnerAdvances = advances.filter(a => a.partnerId === partner.id && a.hidden !== true);
+                const totalAdvanceAmount = partnerAdvances.reduce((sum, a) => sum + (a.amount || 0), 0);
+                
+                const partnerOrders = orders.filter(o => o.partnerId === partner.id);
+                const totalOrderAmount = partnerOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+                const totalOrderQuantity = partnerOrders.reduce((sum, o) => sum + (o.quantity || 0), 0);
+                
+                const partnerPayments = payments.filter(p => p.partnerId === partner.id);
+                const totalPaymentAmount = partnerPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+                
+                const partnerReceipts = receipts.filter(r => r.partnerId === partner.id);
+                const totalReceiptQuantity = partnerReceipts.reduce((sum, r) => sum + (r.quantity || 0), 0);
+                
+                // 실제 줄 돈과 받을 장어
+                const amountToPay = totalOrderAmount + totalAdvanceAmount - totalPaymentAmount;
+                const eelToReceive = totalOrderQuantity - totalReceiptQuantity;
+                
+                return {
+                    partner,
+                    amountToPay,
+                    eelToReceive,
+                    hasData: amountToPay !== 0 || eelToReceive !== 0
+                };
+            }).filter(data => data.hasData); // 거래가 있는 거래처만 표시
+
+            let contentHTML = '<h3>🏢 주요 거래처 현황</h3>';
+            
+            if (partnerData.length === 0) {
+                contentHTML += '<p>거래 내역이 있는 거래처가 없습니다.</p>';
+            } else {
+                partnerData.forEach(data => {
+                    const statusColor = data.amountToPay > 0 ? '#ef4444' : '#10b981';
+                    const eelColor = data.eelToReceive > 0 ? '#10b981' : '#6b7280';
+                    
+                    contentHTML += `
+                        <div class="partner-item">
+                            <div>
+                                <strong style="font-size: 16px;">${data.partner.name}</strong>
+                                <div style="margin-top: 8px;">
+                                    <span style="color: ${statusColor}; font-weight: bold;">💰 ${formatNumber(data.amountToPay)}원</span>
+                                    <span style="margin-left: 15px; color: ${eelColor}; font-weight: bold;">🐍 ${formatNumber(data.eelToReceive)}kg</span>
+                                </div>
+                                <div class="quick-price-input">
+                                    <input type="number" id="quickPrice_${data.partner.id}" placeholder="단가" style="width: 70px; padding: 4px 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px;">
+                                    <button class="btn" onclick="setQuickPrice('${data.partner.id}')" style="padding: 4px 8px; font-size: 11px; background: #10b981;">저장</button>
+                                    <button class="btn" onclick="toggleQuickCalendar('${data.partner.id}')" style="padding: 4px 8px; font-size: 11px; background: #3b82f6;">📅 달력</button>
+                                </div>
+                                <div id="quickCalendar_${data.partner.id}" class="dashboard-calendar" style="display: none;">
+                                    <!-- 달력이 여기에 렌더링됩니다 -->
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            container.innerHTML = contentHTML;
+        }
+
+        // 빠른 단가 저장
+        async function setQuickPrice(partnerId) {
+            const priceInput = document.getElementById(`quickPrice_${partnerId}`);
+            const price = parseFloat(priceInput.value);
+            
+            if (!price || price <= 0) {
+                alert('올바른 단가를 입력하세요.');
+                return;
+            }
+            
+            const today = new Date();
+            const dateKey = formatDateKey(today);
+            const priceKey = `${partnerId}_${dateKey}`;
+            
+            const priceData = {
+                price: price,
+                note: '대시보드에서 빠른 입력',
+                updatedAt: new Date().toISOString()
+            };
+            
+            partnerPrices[priceKey] = priceData;
+            
+            if (isOnline) {
+                await saveToFirebase(collections.partnerPrices, priceData, priceKey);
+            } else {
+                saveToLocal();
+            }
+            
+            priceInput.value = '';
+            renderQuickCalendar(partnerId);
+            alert('오늘 단가가 저장되었습니다.');
+        }
+
+        // 빠른 달력 토글
+        function toggleQuickCalendar(partnerId) {
+            const calendar = document.getElementById(`quickCalendar_${partnerId}`);
+            if (!calendar) return;
+            
+            if (calendar.style.display === 'none' || calendar.style.display === '') {
+                calendar.style.display = 'block';
+                setTimeout(() => renderQuickCalendar(partnerId), 10);
+            } else {
+                calendar.style.display = 'none';
+            }
+        }
+
+        // 빠른 달력 렌더링
+        function renderQuickCalendar(partnerId) {
+            const calendar = document.getElementById(`quickCalendar_${partnerId}`);
+            if (!calendar) return;
+            
+            const partner = partners.find(p => p.id === partnerId);
+            if (!partner) return;
+            
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth();
+            
+            let calendarHTML = `
+                <div class="dashboard-calendar-header">
+                    ${partner.name} - ${year}년 ${month + 1}월
+                </div>
+                <div class="dashboard-calendar-grid">
+            `;
+            
+            // 요일 헤더
+            const days = ['일', '월', '화', '수', '목', '금', '토'];
+            days.forEach(day => {
+                calendarHTML += `<div style="background: #f8fafc; padding: 3px; text-align: center; font-weight: 600; border: 1px solid #e5e7eb; font-size: 9px;">${day}</div>`;
+            });
+            
+            // 달력 날짜들
+            const firstDay = new Date(year, month, 1);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+            
+            for (let week = 0; week < 6; week++) {
+                for (let day = 0; day < 7; day++) {
+                    const cellDate = new Date(startDate);
+                    cellDate.setDate(startDate.getDate() + (week * 7) + day);
+                    
+                    const isCurrentMonth = cellDate.getMonth() === month;
+                    const dateKey = formatDateKey(cellDate);
+                    const priceKey = `${partnerId}_${dateKey}`;
+                    const priceInfo = partnerPrices[priceKey];
+                    
+                    let cellClass = 'dashboard-calendar-cell';
+                    if (!isCurrentMonth) cellClass += ' other-month';
+                    if (priceInfo) cellClass += ' has-price';
+                    
+                    const priceBadge = priceInfo ? 
+                        `<div class="dashboard-price-badge">${formatNumber(priceInfo.price)}</div>` : '';
+                    
+                    calendarHTML += `
+                        <div class="${cellClass}" style="min-height: 25px; padding: 2px;">
+                            <div style="font-size: 9px;">${cellDate.getDate()}</div>
+                            ${priceBadge}
+                        </div>
+                    `;
+                }
+            }
+            
+            calendarHTML += `</div>`;
+            calendar.innerHTML = calendarHTML;
+        }
+
+        // select 옵션 업데이트
+        function updateSelects() {
+            const selects = ['orderPartner', 'advancePartner', 'paymentPartner', 'receiptPartner', 'historyFilter'];
+            
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                if (!select) return;
+                
+                const currentValue = select.value;
+                const isHistoryFilter = selectId === 'historyFilter';
+                
+                select.innerHTML = isHistoryFilter ? 
+                    '<option value="">전체 거래처</option>' : 
+                    '<option value="">거래처를 선택하세요</option>';
+                
+                partners.forEach(partner => {
+                    const option = document.createElement('option');
+                    option.value = partner.id;
+                    option.textContent = partner.name;
+                    if (currentValue === partner.id) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        // 거래처 목록 업데이트
+        function updatePartnersList() {
+            const container = document.getElementById('partnersList');
+            if (!container) return;
+            
+            container.innerHTML = '<h3>거래처 목록</h3>';
+            
+            if (partners.length === 0) {
+                container.innerHTML += '<p>등록된 거래처가 없습니다.</p>';
+                return;
+            }
+            
+            partners.forEach(partner => {
+                const partnerDiv = document.createElement('div');
+                partnerDiv.className = 'partner-item';
+                partnerDiv.innerHTML = `
+                    <div>
+                        <strong>${partner.name}</strong>
+                        <br>
+                        <small>📞 ${partner.phone || '없음'}</small>
+                        <br>
+                        <small>📍 ${partner.address || '없음'}</small>
+                        <br>
+                        <small>📝 ${partner.memo || '없음'}</small>
+                        <br>
+                        <small>등록일: ${formatDate(partner.createdAt)}</small>
+                    </div>
+                    <div>
+                        <button class="btn" onclick="editPartner('${partner.id}')">수정</button>
+                        <button class="btn btn-danger" onclick="deletePartner('${partner.id}')">삭제</button>
+                    </div>
+                `;
+                container.appendChild(partnerDiv);
+            });
+        }
+
+        // 거래처 수정
+        async function editPartner(id) {
+            const partner = partners.find(p => p.id === id);
+            if (!partner) return;
+            
+            const newName = prompt('거래처명을 입력하세요:', partner.name);
+            if (newName === null) return;
+            
+            if (!newName.trim()) {
+                alert('거래처명을 입력하세요.');
+                return;
+            }
+            
+            const newContact = prompt('연락처를 입력하세요:', partner.contact || '');
+            const newMemo = prompt('메모를 입력하세요:', partner.memo || '');
+            
+            // 파트너 정보 업데이트
+            partner.name = newName.trim();
+            partner.contact = newContact ? newContact.trim() : '';
+            partner.memo = newMemo ? newMemo.trim() : '';
+            partner.updatedAt = new Date().toISOString();
+            
+            try {
+                // Firebase에 업데이트
+                if (isOnline) {
+                    await saveToFirebase(collections.partners, partner, id);
+                }
+                
+                // 로컬 저장소에도 저장
+                saveToLocal();
+                
+                // UI 업데이트
+                updatePartnersList();
+                updateSelects();
+                
+                alert('거래처가 수정되었습니다.');
+            } catch (error) {
+                console.error('거래처 수정 오류:', error);
+                alert('거래처 수정 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 거래처 삭제
+        async function deletePartner(id) {
+            const partner = partners.find(p => p.id === id);
+            if (!partner) return;
+            
+            if (!confirm(`${partner.name} 거래처를 삭제하시겠습니까?\n\n⚠️ 관련된 모든 거래 데이터도 함께 삭제됩니다.`)) {
+                return;
+            }
+            
+            // 관련 데이터 삭제
+            const relatedOrders = orders.filter(order => order.partnerId === id);
+            const relatedAdvances = advances.filter(advance => advance.partnerId === id);
+            const relatedPayments = payments.filter(payment => payment.partnerId === id);
+            const relatedReceipts = receipts.filter(receipt => receipt.partnerId === id);
+            
+            if (isOnline) {
+                // Firebase에서 삭제
+                await deleteFromFirebase(collections.partners, id);
+                
+                // 관련 데이터도 Firebase에서 삭제
+                const deletePromises = [
+                    ...relatedOrders.map(item => deleteFromFirebase(collections.orders, item.id)),
+                    ...relatedAdvances.map(item => deleteFromFirebase(collections.advances, item.id)),
+                    ...relatedPayments.map(item => deleteFromFirebase(collections.payments, item.id)),
+                    ...relatedReceipts.map(item => deleteFromFirebase(collections.receipts, item.id))
+                ];
+                
+                await Promise.all(deletePromises);
+            }
+            
+            // 로컬 데이터 삭제
+            orders = orders.filter(order => order.partnerId !== id);
+            advances = advances.filter(advance => advance.partnerId !== id);
+            payments = payments.filter(payment => payment.partnerId !== id);
+            receipts = receipts.filter(receipt => receipt.partnerId !== id);
+            partners = partners.filter(p => p.id !== id);
+            
+            if (!isOnline) {
+                saveToLocal();
+            }
+            
+            updateAllLists();
+            alert('거래처가 삭제되었습니다.');
+        }
+
+        // 선주문 목록 업데이트
+        function updateOrdersList() {
+            const container = document.getElementById('ordersList');
+            if (!container) return;
+            
+            container.innerHTML = '<h3>선주문 목록</h3>';
+            
+            if (orders.length === 0) {
+                container.innerHTML += '<p>등록된 선주문이 없습니다.</p>';
+                return;
+            }
+            
+            // 최신순으로 정렬
+            const sortedOrders = [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            sortedOrders.forEach(order => {
+                const partner = partners.find(p => p.id === order.partnerId);
+                const partnerName = partner ? partner.name : '삭제된 거래처';
+                
+                const orderDiv = document.createElement('div');
+                orderDiv.className = 'partner-item';
+                orderDiv.innerHTML = `
+                    <div>
+                        <strong>${partnerName}</strong>
+                        <br>
+                        <small>📅 주문날짜: ${formatDate(order.orderDate)}</small>
+                        <br>
+                        <small>수량: ${formatNumber(order.quantity)}kg</small>
+                        <br>
+                        <small>단가: ${formatNumber(order.price)}원/kg</small>
+                        <br>
+                        <small>총액: ${formatNumber(order.totalAmount)}원</small>
+                        <br>
+                        <small>메모: ${order.memo || '없음'}</small>
+                        <br>
+                        <small>등록일: ${formatDate(order.createdAt)}</small>
+                    </div>
+                    <div>
+                        <button class="btn btn-danger" onclick="deleteOrder('${order.id}')">삭제</button>
+                    </div>
+                `;
+                container.appendChild(orderDiv);
+            });
+        }
+
+        // 외상 목록 업데이트
+        function updateAdvancesList() {
+            const container = document.getElementById('advancesList');
+            if (!container) return;
+            
+            container.innerHTML = '<h3>외상 목록</h3>';
+            
+            if (advances.length === 0) {
+                container.innerHTML += '<p>등록된 외상이 없습니다.</p>';
+                return;
+            }
+            
+            // 최신순으로 정렬
+            const sortedAdvances = [...advances].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            sortedAdvances.forEach(advance => {
+                const partner = partners.find(p => p.id === advance.partnerId);
+                const partnerName = partner ? partner.name : '삭제된 거래처';
+                
+                const advanceDiv = document.createElement('div');
+                advanceDiv.className = 'partner-item';
+                advanceDiv.innerHTML = `
+                    <div>
+                        <strong>${partnerName}</strong>
+                        <br>
+                        <small>📅 외상날짜: ${formatDate(advance.advanceDate)}</small>
+                        <br>
+                        <small>외상금액: ${formatNumber(advance.amount)}원</small>
+                        <br>
+                        <small>메모: ${advance.memo || '없음'}</small>
+                        <br>
+                        <small>대시보드 표시: ${advance.hidden ? '숨김' : '표시'}</small>
+                        <br>
+                        <small>등록일: ${formatDate(advance.createdAt)}</small>
+                    </div>
+                    <div>
+                        <button class="btn" onclick="toggleAdvanceVisibility('${advance.id}')">${advance.hidden ? '표시' : '숨김'}</button>
+                        <button class="btn btn-danger" onclick="deleteAdvance('${advance.id}')">삭제</button>
+                    </div>
+                `;
+                container.appendChild(advanceDiv);
+            });
+        }
+
+        // 입금 목록 업데이트
+        function updatePaymentsList() {
+            const container = document.getElementById('paymentsList');
+            if (!container) return;
+            
+            container.innerHTML = '<h3>입금 목록</h3>';
+            
+            if (payments.length === 0) {
+                container.innerHTML += '<p>등록된 입금이 없습니다.</p>';
+                return;
+            }
+            
+            // 최신순으로 정렬
+            const sortedPayments = [...payments].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            sortedPayments.forEach(payment => {
+                const partner = partners.find(p => p.id === payment.partnerId);
+                const partnerName = partner ? partner.name : '삭제된 거래처';
+                
+                const paymentDiv = document.createElement('div');
+                paymentDiv.className = 'partner-item';
+                paymentDiv.innerHTML = `
+                    <div>
+                        <strong>${partnerName}</strong>
+                        <br>
+                        <small>📅 입금날짜: ${formatDate(payment.paymentDate)}</small>
+                        <br>
+                        <small>입금액: ${formatNumber(payment.amount)}원</small>
+                        <br>
+                        <small>메모: ${payment.memo || '없음'}</small>
+                        <br>
+                        <small>등록일: ${formatDate(payment.createdAt)}</small>
+                    </div>
+                    <div>
+                        <button class="btn btn-danger" onclick="deletePayment('${payment.id}')">삭제</button>
+                    </div>
+                `;
+                container.appendChild(paymentDiv);
+            });
+        }
+
+        // 입고 목록 업데이트
+        function updateReceiptsList() {
+            const container = document.getElementById('receiptsList');
+            if (!container) return;
+            
+            container.innerHTML = '<h3>입고 목록</h3>';
+            
+            if (receipts.length === 0) {
+                container.innerHTML += '<p>등록된 입고가 없습니다.</p>';
+                return;
+            }
+            
+            // 최신순으로 정렬
+            const sortedReceipts = [...receipts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            sortedReceipts.forEach(receipt => {
+                const partner = partners.find(p => p.id === receipt.partnerId);
+                const partnerName = partner ? partner.name : '삭제된 거래처';
+                
+                const receiptDiv = document.createElement('div');
+                receiptDiv.className = 'partner-item';
+                receiptDiv.innerHTML = `
+                    <div>
+                        <strong>${partnerName}</strong>
+                        <br>
+                        <small>📅 입고날짜: ${formatDate(receipt.receiptDate)}</small>
+                        <br>
+                        <small>수량: ${formatNumber(receipt.quantity)}kg</small>
+                        <br>
+                        <small>메모: ${receipt.memo || '없음'}</small>
+                        <br>
+                        <small>등록일: ${formatDate(receipt.createdAt)}</small>
+                    </div>
+                    <div>
+                        <button class="btn btn-danger" onclick="deleteReceipt('${receipt.id}')">삭제</button>
+                    </div>
+                `;
+                container.appendChild(receiptDiv);
+            });
+        }
+
+        // 거래내역 업데이트
+        function updateHistoryList() {
+            const container = document.getElementById('historyList');
+            if (!container) return;
+            
+            const selectedPartnerId = document.getElementById('historyFilter').value;
+            
+            container.innerHTML = '<h3>거래내역</h3>';
+            
+            // 모든 거래 데이터를 하나의 배열로 통합
+            let allTransactions = [];
+            
+            // 선주문 추가
+            orders.forEach(order => {
+                const partner = partners.find(p => p.id === order.partnerId);
+                if (!selectedPartnerId || order.partnerId === selectedPartnerId) {
+                    allTransactions.push({
+                        type: '선주문',
+                        partner: partner ? partner.name : '삭제된 거래처',
+                        amount: order.totalAmount,
+                        quantity: order.quantity,
+                        price: order.price,
+                        memo: order.memo,
+                        transactionDate: order.orderDate,
+                        date: order.createdAt,
+                        icon: '📦'
+                    });
+                }
+            });
+            
+            // 외상 추가
+            advances.forEach(advance => {
+                const partner = partners.find(p => p.id === advance.partnerId);
+                if (!selectedPartnerId || advance.partnerId === selectedPartnerId) {
+                    allTransactions.push({
+                        type: '외상',
+                        partner: partner ? partner.name : '삭제된 거래처',
+                        amount: advance.amount,
+                        memo: advance.memo,
+                        transactionDate: advance.advanceDate,
+                        date: advance.createdAt,
+                        icon: '💳',
+                        hidden: advance.hidden
+                    });
+                }
+            });
+            
+            // 입금 추가
+            payments.forEach(payment => {
+                const partner = partners.find(p => p.id === payment.partnerId);
+                if (!selectedPartnerId || payment.partnerId === selectedPartnerId) {
+                    allTransactions.push({
+                        type: '입금',
+                        partner: partner ? partner.name : '삭제된 거래처',
+                        amount: payment.amount,
+                        memo: payment.memo,
+                        transactionDate: payment.paymentDate,
+                        date: payment.createdAt,
+                        icon: '💰'
+                    });
+                }
+            });
+            
+            // 입고 추가
+            receipts.forEach(receipt => {
+                const partner = partners.find(p => p.id === receipt.partnerId);
+                if (!selectedPartnerId || receipt.partnerId === selectedPartnerId) {
+                    allTransactions.push({
+                        type: '입고',
+                        partner: partner ? partner.name : '삭제된 거래처',
+                        quantity: receipt.quantity,
+                        memo: receipt.memo,
+                        transactionDate: receipt.receiptDate,
+                        date: receipt.createdAt,
+                        icon: '📥'
+                    });
+                }
+            });
+            
+            if (allTransactions.length === 0) {
+                container.innerHTML += '<p>거래내역이 없습니다.</p>';
+                return;
+            }
+            
+            // 날짜순으로 정렬 (최신순)
+            allTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            allTransactions.forEach(transaction => {
+                const transactionDiv = document.createElement('div');
+                transactionDiv.className = 'partner-item';
+                
+                let content = `
+                    <div>
+                        <strong>${transaction.icon} ${transaction.type} - ${transaction.partner}</strong>
+                        <br>
+                        <small>📅 거래날짜: ${formatDate(transaction.transactionDate)}</small>
+                `;
+                
+                if (transaction.amount) {
+                    content += `<br><small>금액: ${formatNumber(transaction.amount)}원</small>`;
+                }
+                
+                if (transaction.quantity) {
+                    content += `<br><small>수량: ${formatNumber(transaction.quantity)}kg</small>`;
+                }
+                
+                if (transaction.price) {
+                    content += `<br><small>단가: ${formatNumber(transaction.price)}원/kg</small>`;
+                }
+                
+                if (transaction.memo) {
+                    content += `<br><small>메모: ${transaction.memo}</small>`;
+                }
+                
+                if (transaction.hidden) {
+                    content += `<br><small style="color: #6b7280;">대시보드 숨김</small>`;
+                }
+                
+                content += `<br><small>등록일: ${formatDate(transaction.date)}</small>`;
+                content += '</div>';
+                
+                transactionDiv.innerHTML = content;
+                container.appendChild(transactionDiv);
+            });
+        }
+
+        // 선주문 추가
+        async function addOrder() {
+            const partnerId = document.getElementById('orderPartner').value;
+            const orderDate = document.getElementById('orderDate').value;
+            const quantity = parseFloat(document.getElementById('orderQuantity').value);
+            const price = parseFloat(document.getElementById('orderPrice').value);
+            const memo = document.getElementById('orderMemo').value.trim();
+
+            if (!partnerId) {
+                alert('거래처를 선택하세요.');
+                return;
+            }
+
+            if (!orderDate) {
+                alert('주문날짜를 선택하세요.');
+                return;
+            }
+
+            if (!quantity || quantity <= 0) {
+                alert('올바른 수량을 입력하세요.');
+                return;
+            }
+
+            if (!price || price <= 0) {
+                alert('올바른 단가를 입력하세요.');
+                return;
+            }
+
+            const order = {
+                partnerId: partnerId,
+                orderDate: orderDate,
+                quantity: quantity,
+                price: price,
+                totalAmount: quantity * price,
+                memo: memo,
+                createdAt: new Date().toISOString()
+            };
+
+            if (isOnline) {
+                const docId = await saveToFirebase(collections.orders, order);
+                order.id = docId;
+            } else {
+                order.id = generateId();
+            }
+
+            orders.push(order);
+            
+            if (!isOnline) {
+                saveToLocal();
+            }
+
+            // 입력 필드 초기화
+            document.getElementById('orderPartner').value = '';
+            document.getElementById('orderDate').value = '';
+            document.getElementById('orderQuantity').value = '';
+            document.getElementById('orderPrice').value = '';
+            document.getElementById('orderTotal').value = '';
+            document.getElementById('orderMemo').value = '';
+
+            updateOrdersList();
+            updateDashboard();
+            updateHistoryList();
+            alert('선주문이 추가되었습니다.');
+        }
+
+        // 외상 추가
+        async function addAdvance() {
+            const partnerId = document.getElementById('advancePartner').value;
+            const advanceDate = document.getElementById('advanceDate').value;
+            const amount = parseFloat(document.getElementById('advanceAmount').value);
+            const memo = document.getElementById('advanceMemo').value.trim();
+            const hidden = document.getElementById('advanceHidden').checked;
+
+            if (!partnerId) {
+                alert('거래처를 선택하세요.');
+                return;
+            }
+
+            if (!advanceDate) {
+                alert('날짜를 선택하세요.');
+                return;
+            }
+
+            if (!amount || amount <= 0) {
+                alert('올바른 외상금액을 입력하세요.');
+                return;
+            }
+
+            const advance = {
+                partnerId: partnerId,
+                advanceDate: advanceDate,
+                amount: amount,
+                memo: memo,
+                hidden: hidden,
+                createdAt: new Date().toISOString()
+            };
+
+            if (isOnline) {
+                const docId = await saveToFirebase(collections.advances, advance);
+                advance.id = docId;
+            } else {
+                advance.id = generateId();
+            }
+
+            advances.push(advance);
+            
+            if (!isOnline) {
+                saveToLocal();
+            }
+
+            // 입력 필드 초기화
+            document.getElementById('advancePartner').value = '';
+            document.getElementById('advanceDate').value = '';
+            document.getElementById('advanceAmount').value = '';
+            document.getElementById('advanceMemo').value = '';
+            document.getElementById('advanceHidden').checked = false;
+
+            updateAdvancesList();
+            updateDashboard();
+            updateHistoryList();
+            alert('외상이 추가되었습니다.');
+        }
+
+        // 입금 추가
+        async function addPayment() {
+            const partnerId = document.getElementById('paymentPartner').value;
+            const paymentDate = document.getElementById('paymentDate').value;
+            const amount = parseFloat(document.getElementById('paymentAmount').value);
+            const memo = document.getElementById('paymentMemo').value.trim();
+
+            if (!partnerId) {
+                alert('거래처를 선택하세요.');
+                return;
+            }
+
+            if (!paymentDate) {
+                alert('날짜를 선택하세요.');
+                return;
+            }
+
+            if (!amount || amount <= 0) {
+                alert('올바른 입금액을 입력하세요.');
+                return;
+            }
+
+            const payment = {
+                partnerId: partnerId,
+                paymentDate: paymentDate,
+                amount: amount,
+                memo: memo,
+                createdAt: new Date().toISOString()
+            };
+
+            if (isOnline) {
+                const docId = await saveToFirebase(collections.payments, payment);
+                payment.id = docId;
+            } else {
+                payment.id = generateId();
+            }
+
+            payments.push(payment);
+            
+            if (!isOnline) {
+                saveToLocal();
+            }
+
+            // 입력 필드 초기화
+            document.getElementById('paymentPartner').value = '';
+            document.getElementById('paymentDate').value = '';
+            document.getElementById('paymentAmount').value = '';
+            document.getElementById('paymentMemo').value = '';
+
+            updatePaymentsList();
+            updateDashboard();
+            updateHistoryList();
+            alert('입금이 추가되었습니다.');
+        }
+
+        // 입고 추가
+        async function addReceipt() {
+            const partnerId = document.getElementById('receiptPartner').value;
+            const receiptDate = document.getElementById('receiptDate').value;
+            const quantity = parseFloat(document.getElementById('receiptQuantity').value);
+            const memo = document.getElementById('receiptMemo').value.trim();
+
+            if (!partnerId) {
+                alert('거래처를 선택하세요.');
+                return;
+            }
+
+            if (!receiptDate) {
+                alert('날짜를 선택하세요.');
+                return;
+            }
+
+            if (!quantity || quantity <= 0) {
+                alert('올바른 수량을 입력하세요.');
+                return;
+            }
+
+            const receipt = {
+                partnerId: partnerId,
+                receiptDate: receiptDate,
+                quantity: quantity,
+                memo: memo,
+                createdAt: new Date().toISOString()
+            };
+
+            if (isOnline) {
+                const docId = await saveToFirebase(collections.receipts, receipt);
+                receipt.id = docId;
+            } else {
+                receipt.id = generateId();
+            }
+
+            receipts.push(receipt);
+            
+            if (!isOnline) {
+                saveToLocal();
+            }
+
+            // 입력 필드 초기화
+            document.getElementById('receiptPartner').value = '';
+            document.getElementById('receiptDate').value = '';
+            document.getElementById('receiptQuantity').value = '';
+            document.getElementById('receiptMemo').value = '';
+
+            updateReceiptsList();
+            updateDashboard();
+            updateHistoryList();
+            alert('입고가 추가되었습니다.');
+        }
+
+        // 거래처별 정보 표시
+        function showPartnerInfo(type) {
+            let partnerId, infoContainer;
+            
+            if (type === 'payment') {
+                partnerId = document.getElementById('paymentPartner').value;
+                infoContainer = document.getElementById('paymentPartnerInfo');
+            } else if (type === 'receipt') {
+                partnerId = document.getElementById('receiptPartner').value;
+                infoContainer = document.getElementById('receiptPartnerInfo');
+            }
+            
+            if (!partnerId || !infoContainer) {
+                if (infoContainer) infoContainer.style.display = 'none';
+                return;
+            }
+            
+            const partner = partners.find(p => p.id === partnerId);
+            if (!partner) {
+                infoContainer.style.display = 'none';
+                return;
+            }
+            
+            // 거래처 데이터 계산 (지불관리에서는 숨겨진 외상도 포함)
+            const partnerAdvances = advances.filter(a => a.partnerId === partnerId);
+            const totalAdvanceAmount = partnerAdvances.reduce((sum, a) => sum + (a.amount || 0), 0);
+            const hiddenAdvances = partnerAdvances.filter(a => a.hidden === true);
+            const visibleAdvances = partnerAdvances.filter(a => a.hidden !== true);
+            
+            const partnerOrders = orders.filter(o => o.partnerId === partnerId);
+            const totalOrderAmount = partnerOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+            const totalOrderQuantity = partnerOrders.reduce((sum, o) => sum + (o.quantity || 0), 0);
+            
+            const partnerPayments = payments.filter(p => p.partnerId === partnerId);
+            const totalPaymentAmount = partnerPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+            
+            const partnerReceipts = receipts.filter(r => r.partnerId === partnerId);
+            const totalReceiptQuantity = partnerReceipts.reduce((sum, r) => sum + (r.quantity || 0), 0);
+            
+            // 실제 받을 금액과 받을 장어
+            const actualReceivable = totalOrderAmount + totalAdvanceAmount - totalPaymentAmount;
+            const pendingEelQuantity = totalOrderQuantity - totalReceiptQuantity;
+            
+            let infoHTML = `<strong>${partner.name} 거래처 현황</strong><br><br>`;
+            
+            if (type === 'payment') {
+                const hiddenAmount = hiddenAdvances.reduce((sum, a) => sum + (a.amount || 0), 0);
+                const visibleAmount = visibleAdvances.reduce((sum, a) => sum + (a.amount || 0), 0);
+                
+                infoHTML += `
+                    💰 <strong>총 줄 돈: ${formatNumber(actualReceivable)}원</strong><br><br>
+                    💳 <strong style="color: #dc2626;">총 외상금액: ${formatNumber(totalAdvanceAmount)}원</strong><br>
+                    ${visibleAmount > 0 ? `　└ 표시된 외상: ${formatNumber(visibleAmount)}원 (${visibleAdvances.length}건)<br>` : ''}
+                    ${hiddenAmount > 0 ? `　└ <span style="color: #6b7280;">숨겨진 외상: ${formatNumber(hiddenAmount)}원 (${hiddenAdvances.length}건)</span><br>` : ''}
+                    📦 선주문금액: ${formatNumber(totalOrderAmount)}원<br>
+                    💸 기지불금액: ${formatNumber(totalPaymentAmount)}원<br><br>
+                    <small>* 지불관리에서는 모든 외상(숨김 포함)이 계산에 반영됩니다</small>
+                `;
+            } else if (type === 'receipt') {
+                infoHTML += `
+                    🐍 <strong>받을 장어: ${formatNumber(pendingEelQuantity)}kg</strong><br>
+                    📦 선주문: ${formatNumber(totalOrderQuantity)}kg<br>
+                    📥 기입고: ${formatNumber(totalReceiptQuantity)}kg<br>
+                    💰 총주문금액: ${formatNumber(totalOrderAmount)}원
+                `;
+            }
+            
+            infoContainer.innerHTML = infoHTML;
+            infoContainer.style.display = 'block';
+        }
+
+        // 외상 표시/숨김 토글
+        async function toggleAdvanceVisibility(id) {
+            const advance = advances.find(a => a.id === id);
+            if (!advance) return;
+            
+            advance.hidden = !advance.hidden;
+            
+            if (isOnline) {
+                await saveToFirebase(collections.advances, advance, id);
+            } else {
+                saveToLocal();
+            }
+            
+            updateAdvancesList();
+            updateDashboard();
+        }
+
+        // 삭제 함수들
+        async function deleteOrder(id) {
+            if (!confirm('선주문을 삭제하시겠습니까?')) return;
+            
+            if (isOnline) {
+                await deleteFromFirebase(collections.orders, id);
+            }
+            
+            orders = orders.filter(o => o.id !== id);
+            
+            if (!isOnline) {
+                saveToLocal();
+            }
+            
+            updateOrdersList();
+            updateDashboard();
+            updateHistoryList();
+            alert('선주문이 삭제되었습니다.');
+        }
+
+        async function deleteAdvance(id) {
+            if (!confirm('외상을 삭제하시겠습니까?')) return;
+            
+            if (isOnline) {
+                await deleteFromFirebase(collections.advances, id);
+            }
+            
+            advances = advances.filter(a => a.id !== id);
+            
+            if (!isOnline) {
+                saveToLocal();
+            }
+            
+            updateAdvancesList();
+            updateDashboard();
+            updateHistoryList();
+            alert('외상이 삭제되었습니다.');
+        }
+
+        async function deletePayment(id) {
+            if (!confirm('입금을 삭제하시겠습니까?')) return;
+            
+            if (isOnline) {
+                await deleteFromFirebase(collections.payments, id);
+            }
+            
+            payments = payments.filter(p => p.id !== id);
+            
+            if (!isOnline) {
+                saveToLocal();
+            }
+            
+            updatePaymentsList();
+            updateDashboard();
+            updateHistoryList();
+            alert('입금이 삭제되었습니다.');
+        }
+
+        async function deleteReceipt(id) {
+            if (!confirm('입고를 삭제하시겠습니까?')) return;
+            
+            if (isOnline) {
+                await deleteFromFirebase(collections.receipts, id);
+            }
+            
+            receipts = receipts.filter(r => r.id !== id);
+            
+            if (!isOnline) {
+                saveToLocal();
+            }
+            
+            updateReceiptsList();
+            updateDashboard();
+            updateHistoryList();
+            alert('입고가 삭제되었습니다.');
+        }
+
+        // 주문 계산기
+        document.addEventListener('DOMContentLoaded', function() {
+            const quantityInput = document.getElementById('orderQuantity');
+            const priceInput = document.getElementById('orderPrice');
+            const totalInput = document.getElementById('orderTotal');
+
+            function calculateTotal() {
+                const quantity = parseFloat(quantityInput.value) || 0;
+                const price = parseFloat(priceInput.value) || 0;
+                const total = quantity * price;
+                totalInput.value = total > 0 ? formatNumber(total) + '원' : '';
+            }
+
+            if (quantityInput) quantityInput.addEventListener('input', calculateTotal);
+            if (priceInput) priceInput.addEventListener('input', calculateTotal);
+
+            // 날짜 기본값 설정
+            const today = new Date().toISOString().split('T')[0];
+            const dateInputs = ['orderDate', 'advanceDate', 'paymentDate', 'receiptDate'];
+            dateInputs.forEach(id => {
+                const input = document.getElementById(id);
+                if (input) input.value = today;
+            });
+
+            // 초기 데이터 로드
+            loadFirebaseData();
+        });
+    </script>
+</body>
+</html>
