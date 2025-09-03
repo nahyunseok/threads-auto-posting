@@ -777,15 +777,19 @@
         // Firestore에서 데이터 삭제
         async function deleteFromFirebase(collectionName, docId) {
             if (!isOnline || !window.firebaseModules) {
-                return saveToLocal();
+                console.log('오프라인 모드 또는 Firebase 없음 - 로컬에서만 처리');
+                return; // 오프라인일 때는 에러가 아님
             }
 
             try {
                 const { doc, deleteDoc } = window.firebaseModules;
+                console.log(`Firebase에서 ${collectionName} 삭제 중:`, docId);
                 await deleteDoc(doc(db, collectionName, docId));
+                console.log(`Firebase ${collectionName} 삭제 완료:`, docId);
             } catch (error) {
-                console.error(`${collectionName} 삭제 실패:`, error);
-                saveToLocal();
+                console.error(`${collectionName} Firebase 삭제 실패:`, error);
+                // Firebase 삭제 실패시 에러를 다시 throw하여 상위 함수에서 처리
+                throw new Error(`Firebase에서 ${collectionName} 삭제 실패: ${error.message}`);
             }
         }
 
@@ -1232,45 +1236,92 @@
         // 거래처 삭제
         async function deletePartner(id) {
             const partner = partners.find(p => p.id === id);
-            if (!partner) return;
+            if (!partner) {
+                console.error('삭제할 거래처를 찾을 수 없습니다:', id);
+                return;
+            }
             
             if (!confirm(`${partner.name} 거래처를 삭제하시겠습니까?\n\n⚠️ 관련된 모든 거래 데이터도 함께 삭제됩니다.`)) {
                 return;
             }
             
-            // 관련 데이터 삭제
-            const relatedOrders = orders.filter(order => order.partnerId === id);
-            const relatedAdvances = advances.filter(advance => advance.partnerId === id);
-            const relatedPayments = payments.filter(payment => payment.partnerId === id);
-            const relatedReceipts = receipts.filter(receipt => receipt.partnerId === id);
+            console.log('거래처 삭제 시작:', partner.name, id);
             
-            if (isOnline) {
-                // Firebase에서 삭제
-                await deleteFromFirebase(collections.partners, id);
+            try {
+                // 관련 데이터 확인
+                const relatedOrders = orders.filter(order => order.partnerId === id);
+                const relatedAdvances = advances.filter(advance => advance.partnerId === id);
+                const relatedPayments = payments.filter(payment => payment.partnerId === id);
+                const relatedReceipts = receipts.filter(receipt => receipt.partnerId === id);
                 
-                // 관련 데이터도 Firebase에서 삭제
-                const deletePromises = [
-                    ...relatedOrders.map(item => deleteFromFirebase(collections.orders, item.id)),
-                    ...relatedAdvances.map(item => deleteFromFirebase(collections.advances, item.id)),
-                    ...relatedPayments.map(item => deleteFromFirebase(collections.payments, item.id)),
-                    ...relatedReceipts.map(item => deleteFromFirebase(collections.receipts, item.id))
-                ];
+                console.log('삭제할 관련 데이터:', {
+                    orders: relatedOrders.length,
+                    advances: relatedAdvances.length,
+                    payments: relatedPayments.length,
+                    receipts: relatedReceipts.length
+                });
                 
-                await Promise.all(deletePromises);
+                // Firebase에서 삭제 (온라인일 때만)
+                if (isOnline && window.firebaseModules) {
+                    console.log('Firebase에서 거래처 및 관련 데이터 삭제 시작');
+                    
+                    // 거래처 삭제
+                    await deleteFromFirebase(collections.partners, id);
+                    
+                    // 관련 데이터도 Firebase에서 삭제
+                    const deletePromises = [
+                        ...relatedOrders.map(item => deleteFromFirebase(collections.orders, item.id)),
+                        ...relatedAdvances.map(item => deleteFromFirebase(collections.advances, item.id)),
+                        ...relatedPayments.map(item => deleteFromFirebase(collections.payments, item.id)),
+                        ...relatedReceipts.map(item => deleteFromFirebase(collections.receipts, item.id))
+                    ];
+                    
+                    await Promise.all(deletePromises);
+                    console.log('Firebase 삭제 완료');
+                } else {
+                    console.log('오프라인 모드 - Firebase 삭제 건너뜀');
+                }
+                
+                // 로컬 데이터 삭제 (Firebase 삭제 성공 후 또는 오프라인일 때)
+                console.log('로컬 데이터에서 삭제 시작');
+                
+                const originalPartnersLength = partners.length;
+                const originalOrdersLength = orders.length;
+                const originalAdvancesLength = advances.length;
+                const originalPaymentsLength = payments.length;
+                const originalReceiptsLength = receipts.length;
+                
+                // 관련 데이터 먼저 삭제
+                orders = orders.filter(order => order.partnerId !== id);
+                advances = advances.filter(advance => advance.partnerId !== id);
+                payments = payments.filter(payment => payment.partnerId !== id);
+                receipts = receipts.filter(receipt => receipt.partnerId !== id);
+                
+                // 거래처 삭제
+                partners = partners.filter(p => p.id !== id);
+                
+                console.log('로컬 삭제 결과:', {
+                    partners: `${originalPartnersLength} -> ${partners.length}`,
+                    orders: `${originalOrdersLength} -> ${orders.length}`,
+                    advances: `${originalAdvancesLength} -> ${advances.length}`,
+                    payments: `${originalPaymentsLength} -> ${payments.length}`,
+                    receipts: `${originalReceiptsLength} -> ${receipts.length}`
+                });
+                
+                // 로컬 저장소 업데이트
+                saveToLocal();
+                console.log('localStorage 업데이트 완료');
+                
+                // UI 업데이트
+                updateAllLists();
+                console.log('UI 업데이트 완료');
+                
+                alert('거래처가 삭제되었습니다.');
+                
+            } catch (error) {
+                console.error('거래처 삭제 중 오류:', error);
+                alert(`거래처 삭제 중 오류가 발생했습니다:\n${error.message}\n\n다시 시도해주세요.`);
             }
-            
-            // 로컬 데이터 삭제
-            orders = orders.filter(order => order.partnerId !== id);
-            advances = advances.filter(advance => advance.partnerId !== id);
-            payments = payments.filter(payment => payment.partnerId !== id);
-            receipts = receipts.filter(receipt => receipt.partnerId !== id);
-            partners = partners.filter(p => p.id !== id);
-            
-            // 항상 로컬 저장소에도 저장 (Firebase와 동기화)
-            saveToLocal();
-            
-            updateAllLists();
-            alert('거래처가 삭제되었습니다.');
         }
 
         // 선주문 목록 업데이트
