@@ -1283,8 +1283,8 @@
             }
         }
 
-        // 즉시 삭제 함수 (디버깅 강화)
-        function immediateDeletePartner(id, name) {
+        // 즉시 삭제 함수 (Firebase 동기화 개선)
+        async function immediateDeletePartner(id, name) {
             console.log('=== 삭제 함수 호출됨 ===', id, name);
             
             if (!id) {
@@ -1357,14 +1357,48 @@
                 console.error('❌ localStorage 저장 실패:', error);
             }
             
-            // 3. Firebase에서도 삭제 시도
+            // 3. Firebase에서도 삭제 시도 (관련 데이터 포함)
             if (isOnline && window.firebaseModules) {
                 try {
-                    deleteFromFirebase(collections.partners, id);
-                    console.log('Firebase 삭제 요청 전송');
+                    console.log('🔥 Firebase 삭제 시작');
+                    
+                    // 거래처 삭제
+                    await deleteFromFirebase(collections.partners, id);
+                    console.log('✅ Firebase 거래처 삭제 완료');
+                    
+                    // 관련 데이터 삭제
+                    const relatedOrders = orders.filter(o => String(o.partnerId) === String(id));
+                    const relatedAdvances = advances.filter(a => String(a.partnerId) === String(id));
+                    const relatedPayments = payments.filter(p => String(p.partnerId) === String(id));
+                    const relatedReceipts = receipts.filter(r => String(r.partnerId) === String(id));
+                    
+                    console.log('관련 데이터 삭제:', {
+                        orders: relatedOrders.length,
+                        advances: relatedAdvances.length,
+                        payments: relatedPayments.length,
+                        receipts: relatedReceipts.length
+                    });
+                    
+                    // 관련 데이터 Firebase에서 삭제
+                    const deletePromises = [
+                        ...relatedOrders.map(item => deleteFromFirebase(collections.orders, item.id)),
+                        ...relatedAdvances.map(item => deleteFromFirebase(collections.advances, item.id)),
+                        ...relatedPayments.map(item => deleteFromFirebase(collections.payments, item.id)),
+                        ...relatedReceipts.map(item => deleteFromFirebase(collections.receipts, item.id))
+                    ];
+                    
+                    if (deletePromises.length > 0) {
+                        await Promise.all(deletePromises);
+                        console.log('✅ 모든 관련 데이터 Firebase 삭제 완료');
+                    }
+                    
+                    console.log('🎉 Firebase 완전 삭제 완료 - 다른 기기에서 동기화됨');
+                    
                 } catch (error) {
-                    console.warn('Firebase 삭제 실패:', error);
+                    console.error('❌ Firebase 삭제 실패:', error);
                 }
+            } else {
+                console.warn('⚠️ 오프라인 상태 - Firebase 삭제 건너뜀');
             }
             
             // 4. UI 강제 업데이트
@@ -2418,7 +2452,7 @@
         }
 
         // 삭제 함수들
-        function deleteOrder(id) {
+        async function deleteOrder(id) {
             if (!confirm('선주문을 삭제하시겠습니까?')) return;
             
             console.log('=== 선주문 삭제 시작 ===', id);
@@ -2443,10 +2477,10 @@
             // Firebase 삭제 시도
             if (isOnline && window.firebaseModules) {
                 try {
-                    deleteFromFirebase(collections.orders, id);
-                    console.log('Firebase 삭제 요청 전송');
+                    await deleteFromFirebase(collections.orders, id);
+                    console.log('✅ Firebase 선주문 삭제 완료 - 다른 기기 동기화됨');
                 } catch (error) {
-                    console.warn('Firebase 삭제 실패:', error);
+                    console.error('❌ Firebase 삭제 실패:', error);
                 }
             }
             
@@ -2459,7 +2493,7 @@
             alert('선주문이 삭제되었습니다.');
         }
 
-        function deleteAdvance(id) {
+        async function deleteAdvance(id) {
             if (!confirm('외상을 삭제하시겠습니까?')) return;
             
             console.log('=== 외상 삭제 시작 ===', id);
@@ -2484,10 +2518,10 @@
             // Firebase 삭제 시도
             if (isOnline && window.firebaseModules) {
                 try {
-                    deleteFromFirebase(collections.advances, id);
-                    console.log('Firebase 삭제 요청 전송');
+                    await deleteFromFirebase(collections.advances, id);
+                    console.log('✅ Firebase 외상 삭제 완료 - 다른 기기 동기화됨');
                 } catch (error) {
-                    console.warn('Firebase 삭제 실패:', error);
+                    console.error('❌ Firebase 삭제 실패:', error);
                 }
             }
             
@@ -2500,7 +2534,7 @@
             alert('외상이 삭제되었습니다.');
         }
 
-        function deletePayment(id) {
+        async function deletePayment(id) {
             if (!confirm('입금을 삭제하시겠습니까?')) return;
             
             console.log('=== 입금 삭제 시작 ===', id);
@@ -2525,10 +2559,10 @@
             // Firebase 삭제 시도
             if (isOnline && window.firebaseModules) {
                 try {
-                    deleteFromFirebase(collections.payments, id);
-                    console.log('Firebase 삭제 요청 전송');
+                    await deleteFromFirebase(collections.payments, id);
+                    console.log('✅ Firebase 입금 삭제 완료 - 다른 기기 동기화됨');
                 } catch (error) {
-                    console.warn('Firebase 삭제 실패:', error);
+                    console.error('❌ Firebase 삭제 실패:', error);
                 }
             }
             
@@ -2541,7 +2575,7 @@
             alert('입금이 삭제되었습니다.');
         }
 
-        function deleteReceipt(id) {
+        async function deleteReceipt(id) {
             if (!confirm('입고를 삭제하시겠습니까?')) return;
             
             console.log('=== 입고 삭제 시작 ===', id);
@@ -2566,10 +2600,10 @@
             // Firebase 삭제 시도
             if (isOnline && window.firebaseModules) {
                 try {
-                    deleteFromFirebase(collections.receipts, id);
-                    console.log('Firebase 삭제 요청 전송');
+                    await deleteFromFirebase(collections.receipts, id);
+                    console.log('✅ Firebase 입고 삭제 완료 - 다른 기기 동기화됨');
                 } catch (error) {
-                    console.warn('Firebase 삭제 실패:', error);
+                    console.error('❌ Firebase 삭제 실패:', error);
                 }
             }
             
