@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase 실시간 동기화 테스트</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .connected { background: #d4edda; color: #155724; }
+        .disconnected { background: #f8d7da; color: #721c24; }
+        .section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .data-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-left: 3px solid #007bff;
+            border-radius: 3px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .timestamp {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 Firebase 실시간 동기화 테스트</h1>
+        
+        <div id="status" class="status disconnected">연결 확인 중...</div>
+        
+        <div class="section">
+            <h2>📊 현재 데이터 상태</h2>
+            <div id="currentData">로딩 중...</div>
+        </div>
+        
+        <div class="section">
+            <h2>🔄 실시간 업데이트 로그</h2>
+            <div id="updateLog">대기 중...</div>
+        </div>
+        
+        <div class="section">
+            <h2>🛠️ 테스트 도구</h2>
+            <button onclick="addTestData()">테스트 데이터 추가</button>
+            <button onclick="refreshData()">수동 새로고침</button>
+            <button onclick="clearCache()">캐시 초기화</button>
+            <button onclick="checkConnection()">연결 상태 확인</button>
+        </div>
+        
+        <div class="warning">
+            💡 PC와 폰에서 동시에 이 페이지를 열어두고 테스트하세요.
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+        import { 
+            getFirestore, 
+            collection, 
+            onSnapshot, 
+            addDoc, 
+            getDocs, 
+            serverTimestamp,
+            query,
+            orderBy,
+            limit
+        } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+        
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyCXjZ8Gi5fDBUDzqM29V-BtLluiTECcUQM",
+            authDomain: "jangeo-trade.firebaseapp.com",
+            projectId: "jangeo-trade",
+            storageBucket: "jangeo-trade.firebasestorage.app",
+            messagingSenderId: "783900173125",
+            appId: "1:783900173125:web:d57cbfe31e178d0ba8d42c"
+        };
+        
+        let app, db;
+        let unsubscribers = [];
+        
+        async function initializeFirebase() {
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                
+                document.getElementById('status').className = 'status connected';
+                document.getElementById('status').textContent = '✅ Firebase 연결됨 - 실시간 동기화 활성';
+                
+                // 실시간 리스너 설정
+                setupRealtimeListeners();
+                
+                // 초기 데이터 로드
+                await loadCurrentData();
+                
+                window.db = db; // 전역 접근용
+                
+            } catch (error) {
+                console.error('Firebase 초기화 실패:', error);
+                document.getElementById('status').className = 'status disconnected';
+                document.getElementById('status').textContent = '❌ Firebase 연결 실패: ' + error.message;
+            }
+        }
+        
+        function setupRealtimeListeners() {
+            // 기존 리스너 정리
+            unsubscribers.forEach(unsub => unsub());
+            unsubscribers = [];
+            
+            // orders 컬렉션 실시간 감시
+            const ordersQuery = query(
+                collection(db, 'orders'),
+                orderBy('createdAt', 'desc'),
+                limit(10)
+            );
+            
+            const unsubOrders = onSnapshot(ordersQuery, (snapshot) => {
+                const changes = [];
+                snapshot.docChanges().forEach((change) => {
+                    const data = change.doc.data();
+                    const time = new Date().toLocaleTimeString();
+                    
+                    if (change.type === 'added') {
+                        changes.push(`➕ [${time}] 새 주문 추가: ${data.partner || '미지정'} - ${data.quantity || 0}kg`);
+                    } else if (change.type === 'modified') {
+                        changes.push(`📝 [${time}] 주문 수정: ${data.partner || '미지정'}`);
+                    } else if (change.type === 'removed') {
+                        changes.push(`🗑️ [${time}] 주문 삭제: ${change.doc.id}`);
+                    }
+                });
+                
+                if (changes.length > 0) {
+                    updateLog(changes);
+                    loadCurrentData(); // 데이터 새로고침
+                }
+            });
+            
+            unsubscribers.push(unsubOrders);
+            
+            // partners 컬렉션도 감시
+            const unsubPartners = onSnapshot(collection(db, 'partners'), (snapshot) => {
+                const time = new Date().toLocaleTimeString();
+                updateLog([`🏢 [${time}] 거래처 데이터 변경 감지 (${snapshot.size}개)`]);
+                loadCurrentData();
+            });
+            
+            unsubscribers.push(unsubPartners);
+        }
+        
+        async function loadCurrentData() {
+            try {
+                const [ordersSnap, partnersSnap] = await Promise.all([
+                    getDocs(collection(db, 'orders')),
+                    getDocs(collection(db, 'partners'))
+                ]);
+                
+                let totalAmount = 0;
+                let totalQuantity = 0;
+                
+                ordersSnap.forEach(doc => {
+                    const data = doc.data();
+                    totalAmount += (data.totalAmount || 0);
+                    totalQuantity += (data.quantity || 0);
+                });
+                
+                const html = `
+                    <div class="data-item">
+                        <strong>📦 총 주문:</strong> ${ordersSnap.size}건
+                    </div>
+                    <div class="data-item">
+                        <strong>💰 총 금액:</strong> ${totalAmount.toLocaleString()}원
+                    </div>
+                    <div class="data-item">
+                        <strong>⚖️ 총 수량:</strong> ${totalQuantity}kg
+                    </div>
+                    <div class="data-item">
+                        <strong>🏢 거래처:</strong> ${partnersSnap.size}개
+                    </div>
+                    <div class="timestamp">
+                        마지막 업데이트: ${new Date().toLocaleString()}
+                    </div>
+                `;
+                
+                document.getElementById('currentData').innerHTML = html;
+                
+            } catch (error) {
+                console.error('데이터 로드 실패:', error);
+                document.getElementById('currentData').innerHTML = 
+                    `<div class="warning">데이터 로드 실패: ${error.message}</div>`;
+            }
+        }
+        
+        function updateLog(messages) {
+            const logDiv = document.getElementById('updateLog');
+            const newLogs = messages.map(msg => 
+                `<div class="data-item">${msg}</div>`
+            ).join('');
+            
+            logDiv.innerHTML = newLogs + logDiv.innerHTML;
+            
+            // 최대 20개 로그만 유지
+            const items = logDiv.querySelectorAll('.data-item');
+            if (items.length > 20) {
+                for (let i = 20; i < items.length; i++) {
+                    items[i].remove();
+                }
+            }
+        }
+        
+        // 전역 함수들
+        window.addTestData = async function() {
+            if (!db) {
+                alert('Firebase가 초기화되지 않았습니다.');
+                return;
+            }
+            
+            try {
+                const testOrder = {
+                    partner: `테스트_${Date.now()}`,
+                    quantity: Math.floor(Math.random() * 100) + 1,
+                    totalAmount: Math.floor(Math.random() * 1000000) + 100000,
+                    createdAt: serverTimestamp(),
+                    deviceInfo: navigator.userAgent.includes('Mobile') ? '모바일' : 'PC'
+                };
+                
+                await addDoc(collection(db, 'orders'), testOrder);
+                updateLog([`✅ 테스트 데이터 추가 완료 (${testOrder.partner})`]);
+                
+            } catch (error) {
+                alert('데이터 추가 실패: ' + error.message);
+            }
+        };
+        
+        window.refreshData = function() {
+            loadCurrentData();
+            updateLog(['🔄 수동 새로고침 실행']);
+        };
+        
+        window.clearCache = function() {
+            localStorage.clear();
+            sessionStorage.clear();
+            updateLog(['🧹 로컬 캐시 초기화 완료']);
+            location.reload();
+        };
+        
+        window.checkConnection = async function() {
+            try {
+                const testDoc = await getDocs(collection(db, 'orders'));
+                updateLog([`✅ 연결 정상 - ${testDoc.size}개 주문 확인`]);
+            } catch (error) {
+                updateLog([`❌ 연결 오류: ${error.message}`]);
+            }
+        };
+        
+        // 초기화
+        initializeFirebase();
+    </script>
+</body>
+</html>

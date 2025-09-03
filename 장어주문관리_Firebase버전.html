@@ -733,12 +733,37 @@
                     getDocs(collection(db, collections.partnerPrices))
                 ]);
 
-                // Firebase 데이터를 배열로 변환
+                // Firebase 데이터를 배열로 변환 (partner 필드를 partnerId로 통일)
                 const firebasePartners = partnersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const firebaseOrders = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const firebaseAdvances = advancesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const firebasePayments = paymentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const firebaseReceipts = receiptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const firebaseOrders = ordersSnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    // partner 필드가 있으면 partnerId로 변환
+                    if (data.partner && !data.partnerId) {
+                        data.partnerId = data.partner;
+                    }
+                    return { id: doc.id, ...data };
+                });
+                const firebaseAdvances = advancesSnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    if (data.partner && !data.partnerId) {
+                        data.partnerId = data.partner;
+                    }
+                    return { id: doc.id, ...data };
+                });
+                const firebasePayments = paymentsSnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    if (data.partner && !data.partnerId) {
+                        data.partnerId = data.partner;
+                    }
+                    return { id: doc.id, ...data };
+                });
+                const firebaseReceipts = receiptsSnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    if (data.partner && !data.partnerId) {
+                        data.partnerId = data.partner;
+                    }
+                    return { id: doc.id, ...data };
+                });
                 
                 // 가격 데이터는 객체로 변환
                 const firebasePrices = {};
@@ -1011,20 +1036,32 @@
                 return;
             }
 
-            // 거래처별 데이터 계산
+            // 거래처별 데이터 계산 (partnerId와 partner 필드 둘 다 확인)
             const partnerData = partners.map(partner => {
                 // 대시보드에서는 숨겨진 외상 제외
-                const partnerAdvances = advances.filter(a => a.partnerId === partner.id && a.hidden !== true);
+                const partnerAdvances = advances.filter(a => {
+                    const aPartnerId = a.partnerId || a.partner;
+                    return (aPartnerId === partner.id || aPartnerId === partner.name) && a.hidden !== true;
+                });
                 const totalAdvanceAmount = partnerAdvances.reduce((sum, a) => sum + (a.amount || 0), 0);
                 
-                const partnerOrders = orders.filter(o => o.partnerId === partner.id);
+                const partnerOrders = orders.filter(o => {
+                    const oPartnerId = o.partnerId || o.partner;
+                    return oPartnerId === partner.id || oPartnerId === partner.name;
+                });
                 const totalOrderAmount = partnerOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
                 const totalOrderQuantity = partnerOrders.reduce((sum, o) => sum + (o.quantity || 0), 0);
                 
-                const partnerPayments = payments.filter(p => p.partnerId === partner.id);
+                const partnerPayments = payments.filter(p => {
+                    const pPartnerId = p.partnerId || p.partner;
+                    return pPartnerId === partner.id || pPartnerId === partner.name;
+                });
                 const totalPaymentAmount = partnerPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
                 
-                const partnerReceipts = receipts.filter(r => r.partnerId === partner.id);
+                const partnerReceipts = receipts.filter(r => {
+                    const rPartnerId = r.partnerId || r.partner;
+                    return rPartnerId === partner.id || rPartnerId === partner.name;
+                });
                 const totalReceiptQuantity = partnerReceipts.reduce((sum, r) => sum + (r.quantity || 0), 0);
                 
                 // 실제 줄 돈과 받을 장어
@@ -1673,8 +1710,10 @@
             const sortedOrders = [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             
             sortedOrders.forEach(order => {
-                const partner = partners.find(p => p.id === order.partnerId);
-                const partnerName = partner ? partner.name : '삭제된 거래처';
+                // partnerId 또는 partner 필드 둘 다 확인
+                const partnerId = order.partnerId || order.partner;
+                const partner = partners.find(p => p.id === partnerId || p.name === partnerId);
+                const partnerName = partner ? partner.name : (partnerId || '삭제된 거래처');
                 
                 const orderDiv = document.createElement('div');
                 orderDiv.className = 'partner-item';
@@ -1718,8 +1757,9 @@
             const sortedAdvances = [...advances].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             
             sortedAdvances.forEach(advance => {
-                const partner = partners.find(p => p.id === advance.partnerId);
-                const partnerName = partner ? partner.name : '삭제된 거래처';
+                const partnerId = advance.partnerId || advance.partner;
+                const partner = partners.find(p => p.id === partnerId || p.name === partnerId);
+                const partnerName = partner ? partner.name : (partnerId || '삭제된 거래처');
                 
                 const advanceDiv = document.createElement('div');
                 advanceDiv.className = 'partner-item';
@@ -1762,8 +1802,9 @@
             const sortedPayments = [...payments].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             
             sortedPayments.forEach(payment => {
-                const partner = partners.find(p => p.id === payment.partnerId);
-                const partnerName = partner ? partner.name : '삭제된 거래처';
+                const partnerId = payment.partnerId || payment.partner;
+                const partner = partners.find(p => p.id === partnerId || p.name === partnerId);
+                const partnerName = partner ? partner.name : (partnerId || '삭제된 거래처');
                 
                 const paymentDiv = document.createElement('div');
                 paymentDiv.className = 'partner-item';
@@ -1803,8 +1844,9 @@
             const sortedReceipts = [...receipts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             
             sortedReceipts.forEach(receipt => {
-                const partner = partners.find(p => p.id === receipt.partnerId);
-                const partnerName = partner ? partner.name : '삭제된 거래처';
+                const partnerId = receipt.partnerId || receipt.partner;
+                const partner = partners.find(p => p.id === partnerId || p.name === partnerId);
+                const partnerName = partner ? partner.name : (partnerId || '삭제된 거래처');
                 
                 const receiptDiv = document.createElement('div');
                 receiptDiv.className = 'partner-item';
