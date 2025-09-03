@@ -1549,9 +1549,11 @@
                 return;
             }
             
-            // 거래처 데이터 계산
-            const partnerAdvances = advances.filter(a => a.partnerId === partnerId && a.hidden !== true);
+            // 거래처 데이터 계산 (지불관리에서는 숨겨진 외상도 포함)
+            const partnerAdvances = advances.filter(a => a.partnerId === partnerId);
             const totalAdvanceAmount = partnerAdvances.reduce((sum, a) => sum + (a.amount || 0), 0);
+            const hiddenAdvances = partnerAdvances.filter(a => a.hidden === true);
+            const visibleAdvances = partnerAdvances.filter(a => a.hidden !== true);
             
             const partnerOrders = orders.filter(o => o.partnerId === partnerId);
             const totalOrderAmount = partnerOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
@@ -1570,11 +1572,17 @@
             let infoHTML = `<strong>${partner.name} 거래처 현황</strong><br><br>`;
             
             if (type === 'payment') {
+                const hiddenAmount = hiddenAdvances.reduce((sum, a) => sum + (a.amount || 0), 0);
+                const visibleAmount = visibleAdvances.reduce((sum, a) => sum + (a.amount || 0), 0);
+                
                 infoHTML += `
-                    💰 <strong>줄 돈: ${formatNumber(actualReceivable)}원</strong><br>
-                    💳 외상: ${formatNumber(totalAdvanceAmount)}원<br>
-                    📦 선주문: ${formatNumber(totalOrderAmount)}원<br>
-                    💸 기지불: ${formatNumber(totalPaymentAmount)}원
+                    💰 <strong>총 줄 돈: ${formatNumber(actualReceivable)}원</strong><br><br>
+                    💳 <strong style="color: #dc2626;">총 외상금액: ${formatNumber(totalAdvanceAmount)}원</strong><br>
+                    ${visibleAmount > 0 ? `　└ 표시된 외상: ${formatNumber(visibleAmount)}원 (${visibleAdvances.length}건)<br>` : ''}
+                    ${hiddenAmount > 0 ? `　└ <span style="color: #6b7280;">숨겨진 외상: ${formatNumber(hiddenAmount)}원 (${hiddenAdvances.length}건)</span><br>` : ''}
+                    📦 선주문금액: ${formatNumber(totalOrderAmount)}원<br>
+                    💸 기지불금액: ${formatNumber(totalPaymentAmount)}원<br><br>
+                    <small>* 지불관리에서는 모든 외상(숨김 포함)이 계산에 반영됩니다</small>
                 `;
             } else if (type === 'receipt') {
                 infoHTML += `
