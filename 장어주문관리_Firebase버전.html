@@ -1058,11 +1058,54 @@
                         <small>등록일: ${formatDate(partner.createdAt)}</small>
                     </div>
                     <div>
+                        <button class="btn" onclick="editPartner('${partner.id}')">수정</button>
                         <button class="btn btn-danger" onclick="deletePartner('${partner.id}')">삭제</button>
                     </div>
                 `;
                 container.appendChild(partnerDiv);
             });
+        }
+
+        // 거래처 수정
+        async function editPartner(id) {
+            const partner = partners.find(p => p.id === id);
+            if (!partner) return;
+            
+            const newName = prompt('거래처명을 입력하세요:', partner.name);
+            if (newName === null) return;
+            
+            if (!newName.trim()) {
+                alert('거래처명을 입력하세요.');
+                return;
+            }
+            
+            const newContact = prompt('연락처를 입력하세요:', partner.contact || '');
+            const newMemo = prompt('메모를 입력하세요:', partner.memo || '');
+            
+            // 파트너 정보 업데이트
+            partner.name = newName.trim();
+            partner.contact = newContact ? newContact.trim() : '';
+            partner.memo = newMemo ? newMemo.trim() : '';
+            partner.updatedAt = new Date().toISOString();
+            
+            try {
+                // Firebase에 업데이트
+                if (isOnline) {
+                    await saveToFirebase(collections.partners, partner, id);
+                }
+                
+                // 로컬 저장소에도 저장
+                saveToLocal();
+                
+                // UI 업데이트
+                updatePartnersList();
+                updateSelects();
+                
+                alert('거래처가 수정되었습니다.');
+            } catch (error) {
+                console.error('거래처 수정 오류:', error);
+                alert('거래처 수정 중 오류가 발생했습니다.');
+            }
         }
 
         // 거래처 삭제
