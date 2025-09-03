@@ -1284,7 +1284,7 @@
         }
 
         // 간단한 거래처 삭제 (강제 실행)
-        function forceDeletePartner(id) {
+        async function forceDeletePartner(id) {
             const partner = partners.find(p => p.id === id);
             if (!partner) {
                 alert('거래처를 찾을 수 없습니다.');
@@ -1295,23 +1295,106 @@
                 return;
             }
             
-            console.log('강제 삭제 시작:', partner.name);
+            console.log('강제 삭제 시작:', partner.name, 'ID:', id);
+            console.log('삭제 전 거래처 수:', partners.length);
             
             // 로컬 배열에서 즉시 제거
+            const originalCount = partners.length;
             partners = partners.filter(p => p.id !== id);
             orders = orders.filter(o => o.partnerId !== id);
             advances = advances.filter(a => a.partnerId !== id);
             payments = payments.filter(p => p.partnerId !== id);
             receipts = receipts.filter(r => r.partnerId !== id);
             
+            console.log('삭제 후 거래처 수:', partners.length, '(', originalCount, '->', partners.length, ')');
+            
             // 로컬 저장
             saveToLocal();
+            console.log('로컬 저장 완료');
             
-            // UI 강제 업데이트
-            updatePartnersList();
-            updateDashboard();
+            // Firebase에서도 즉시 삭제 시도
+            if (isOnline && window.firebaseModules) {
+                try {
+                    console.log('Firebase에서 거래처 삭제 중...');
+                    await deleteFromFirebase(collections.partners, id);
+                    console.log('Firebase 삭제 완료');
+                } catch (error) {
+                    console.warn('Firebase 삭제 실패 (로컬에서는 삭제됨):', error);
+                }
+            }
             
-            console.log('강제 삭제 완료');
+            // UI 강제 업데이트 - DOM 직접 조작
+            console.log('UI 업데이트 시작');
+            
+            // 거래처 목록 완전히 재구성
+            const container = document.getElementById('partnersList');
+            if (container) {
+                container.innerHTML = '<h3>거래처 목록</h3>';
+                if (partners.length === 0) {
+                    container.innerHTML += '<p>등록된 거래처가 없습니다.</p>';
+                } else {
+                    partners.forEach(p => {
+                        const div = document.createElement('div');
+                        div.className = 'partner-item';
+                        div.innerHTML = `
+                            <div>
+                                <strong>${p.name}</strong><br>
+                                <small>📞 ${p.phone || '없음'}</small><br>
+                                <small>📍 ${p.address || '없음'}</small><br>
+                                <small>등록일: ${formatDate(p.createdAt)}</small>
+                            </div>
+                            <div>
+                                <button class="btn" onclick="editPartner('${p.id}')">수정</button>
+                                <button class="btn btn-danger" onclick="forceDeletePartner('${p.id}')">삭제</button>
+                            </div>
+                        `;
+                        container.appendChild(div);
+                    });
+                }
+                console.log('거래처 목록 DOM 업데이트 완료');
+            }
+            
+            // 대시보드 통계 강제 재계산 및 업데이트
+            setTimeout(() => {
+                // 대시보드 통계 강제 재작성
+                const statsContainer = document.getElementById('dashboardStats');
+                if (statsContainer) {
+                    const visibleAdvances = advances.filter(a => a.hidden !== true);
+                    const totalAdvanceAmount = visibleAdvances.reduce((sum, a) => sum + (a.amount || 0), 0);
+                    const totalOrderAmount = orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+                    const totalOrderQuantity = orders.reduce((sum, o) => sum + (o.quantity || 0), 0);
+                    const totalPaymentAmount = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+                    const totalReceiptQuantity = receipts.reduce((sum, r) => sum + (r.quantity || 0), 0);
+                    const totalAmountToPay = totalOrderAmount + totalAdvanceAmount - totalPaymentAmount;
+                    const totalEelToReceive = totalOrderQuantity - totalReceiptQuantity;
+                    
+                    statsContainer.innerHTML = `
+                        <div class="stat-card" style="border-left-color: #ef4444;">
+                            <div class="stat-number" style="color: #ef4444;">${formatNumber(totalAmountToPay)}원</div>
+                            <div>💰 총 줄 돈</div>
+                        </div>
+                        <div class="stat-card" style="border-left-color: #10b981;">
+                            <div class="stat-number" style="color: #10b981;">${formatNumber(totalEelToReceive)}kg</div>
+                            <div>🐍 총 받을 장어</div>
+                        </div>
+                        <div class="stat-card" style="border-left-color: #f59e0b;">
+                            <div class="stat-number" style="color: #f59e0b;">${partners.length}개</div>
+                            <div>👥 거래처</div>
+                        </div>
+                        <div class="stat-card" style="border-left-color: #8b5cf6;">
+                            <div class="stat-number" style="color: #8b5cf6;">${visibleAdvances.length}건</div>
+                            <div>🥄 선주문</div>
+                        </div>
+                    `;
+                    console.log('대시보드 통계 강제 업데이트 완료');
+                }
+                
+                updateDashboardContent();
+                updateSelects();
+                console.log('대시보드 업데이트 완료');
+            }, 100);
+            
+            console.log('강제 삭제 및 UI 업데이트 완료');
             alert('거래처가 삭제되었습니다.');
         }
 
@@ -2304,6 +2387,52 @@
             alert('입고가 삭제되었습니다.');
         }
 
+        // 샘플 데이터 추가 함수
+        function addSampleData() {
+            console.log('샘플 데이터 생성 중...');
+            
+            // 샘플 거래처 추가
+            const samplePartner = {
+                id: generateId(),
+                name: '테스트 거래처',
+                phone: '010-1234-5678',
+                address: '서울시 강남구',
+                memo: '샘플 데이터입니다',
+                createdAt: new Date().toISOString()
+            };
+            
+            partners.push(samplePartner);
+            
+            // 샘플 주문 추가
+            const sampleOrder = {
+                id: generateId(),
+                partnerId: samplePartner.id,
+                date: new Date().toISOString().split('T')[0],
+                quantity: 100,
+                price: 30000,
+                totalAmount: 3000000,
+                createdAt: new Date().toISOString()
+            };
+            
+            orders.push(sampleOrder);
+            
+            // 샘플 외상 추가
+            const sampleAdvance = {
+                id: generateId(),
+                partnerId: samplePartner.id,
+                date: new Date().toISOString().split('T')[0],
+                amount: 500000,
+                memo: '샘플 외상',
+                createdAt: new Date().toISOString()
+            };
+            
+            advances.push(sampleAdvance);
+            
+            // 로컬 저장
+            saveToLocal();
+            console.log('샘플 데이터 생성 완료');
+        }
+
         // 주문 계산기
         document.addEventListener('DOMContentLoaded', function() {
             const quantityInput = document.getElementById('orderQuantity');
@@ -2340,6 +2469,12 @@
             // 로컬 데이터 먼저 로드
             loadLocalData();
             console.log('로컬 데이터 로드 후 partners 수:', partners.length);
+            
+            // 데이터가 없으면 테스트 데이터 생성 (개발/테스트용)
+            if (partners.length === 0 && orders.length === 0) {
+                console.log('데이터가 없음 - 샘플 데이터 추가');
+                addSampleData();
+            }
             
             // UI 즉시 업데이트
             updateAllLists();
