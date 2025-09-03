@@ -2418,75 +2418,167 @@
         }
 
         // 삭제 함수들
-        async function deleteOrder(id) {
+        function deleteOrder(id) {
             if (!confirm('선주문을 삭제하시겠습니까?')) return;
             
-            if (isOnline) {
-                await deleteFromFirebase(collections.orders, id);
+            console.log('=== 선주문 삭제 시작 ===', id);
+            console.log('삭제 전 orders 수:', orders.length);
+            
+            // 배열에서 즉시 제거 (ID 타입 안전 처리)
+            const beforeCount = orders.length;
+            orders = orders.filter(o => {
+                const shouldDelete = (String(o.id) === String(id) && o.id && id);
+                if (shouldDelete) {
+                    console.log('🗑️ 삭제되는 선주문:', o);
+                }
+                return !shouldDelete;
+            });
+            
+            console.log(`선주문 수: ${beforeCount} -> ${orders.length}`);
+            
+            // 로컬 저장
+            localStorage.setItem('eel_orders', JSON.stringify(orders));
+            console.log('✅ localStorage 저장 완료');
+            
+            // Firebase 삭제 시도
+            if (isOnline && window.firebaseModules) {
+                try {
+                    deleteFromFirebase(collections.orders, id);
+                    console.log('Firebase 삭제 요청 전송');
+                } catch (error) {
+                    console.warn('Firebase 삭제 실패:', error);
+                }
             }
             
-            orders = orders.filter(o => o.id !== id);
-            
-            // 항상 로컬 저장소에도 저장 (Firebase와 동기화)
-            saveToLocal();
-            
+            // UI 강제 업데이트
             updateOrdersList();
             updateDashboard();
             updateHistoryList();
+            
+            console.log('=== 선주문 삭제 완료 ===');
             alert('선주문이 삭제되었습니다.');
         }
 
-        async function deleteAdvance(id) {
+        function deleteAdvance(id) {
             if (!confirm('외상을 삭제하시겠습니까?')) return;
             
-            if (isOnline) {
-                await deleteFromFirebase(collections.advances, id);
+            console.log('=== 외상 삭제 시작 ===', id);
+            console.log('삭제 전 advances 수:', advances.length);
+            
+            // 배열에서 즉시 제거 (ID 타입 안전 처리)
+            const beforeCount = advances.length;
+            advances = advances.filter(a => {
+                const shouldDelete = (String(a.id) === String(id) && a.id && id);
+                if (shouldDelete) {
+                    console.log('🗑️ 삭제되는 외상:', a);
+                }
+                return !shouldDelete;
+            });
+            
+            console.log(`외상 수: ${beforeCount} -> ${advances.length}`);
+            
+            // 로컬 저장
+            localStorage.setItem('eel_advances', JSON.stringify(advances));
+            console.log('✅ localStorage 저장 완료');
+            
+            // Firebase 삭제 시도
+            if (isOnline && window.firebaseModules) {
+                try {
+                    deleteFromFirebase(collections.advances, id);
+                    console.log('Firebase 삭제 요청 전송');
+                } catch (error) {
+                    console.warn('Firebase 삭제 실패:', error);
+                }
             }
             
-            advances = advances.filter(a => a.id !== id);
-            
-            // 항상 로컬 저장소에도 저장 (Firebase와 동기화)
-            saveToLocal();
-            
+            // UI 강제 업데이트
             updateAdvancesList();
             updateDashboard();
             updateHistoryList();
+            
+            console.log('=== 외상 삭제 완료 ===');
             alert('외상이 삭제되었습니다.');
         }
 
-        async function deletePayment(id) {
+        function deletePayment(id) {
             if (!confirm('입금을 삭제하시겠습니까?')) return;
             
-            if (isOnline) {
-                await deleteFromFirebase(collections.payments, id);
+            console.log('=== 입금 삭제 시작 ===', id);
+            console.log('삭제 전 payments 수:', payments.length);
+            
+            // 배열에서 즉시 제거 (ID 타입 안전 처리)
+            const beforeCount = payments.length;
+            payments = payments.filter(p => {
+                const shouldDelete = (String(p.id) === String(id) && p.id && id);
+                if (shouldDelete) {
+                    console.log('🗑️ 삭제되는 입금:', p);
+                }
+                return !shouldDelete;
+            });
+            
+            console.log(`입금 수: ${beforeCount} -> ${payments.length}`);
+            
+            // 로컬 저장
+            localStorage.setItem('eel_payments', JSON.stringify(payments));
+            console.log('✅ localStorage 저장 완료');
+            
+            // Firebase 삭제 시도
+            if (isOnline && window.firebaseModules) {
+                try {
+                    deleteFromFirebase(collections.payments, id);
+                    console.log('Firebase 삭제 요청 전송');
+                } catch (error) {
+                    console.warn('Firebase 삭제 실패:', error);
+                }
             }
             
-            payments = payments.filter(p => p.id !== id);
-            
-            // 항상 로컬 저장소에도 저장 (Firebase와 동기화)
-            saveToLocal();
-            
+            // UI 강제 업데이트
             updatePaymentsList();
             updateDashboard();
             updateHistoryList();
+            
+            console.log('=== 입금 삭제 완료 ===');
             alert('입금이 삭제되었습니다.');
         }
 
-        async function deleteReceipt(id) {
+        function deleteReceipt(id) {
             if (!confirm('입고를 삭제하시겠습니까?')) return;
             
-            if (isOnline) {
-                await deleteFromFirebase(collections.receipts, id);
+            console.log('=== 입고 삭제 시작 ===', id);
+            console.log('삭제 전 receipts 수:', receipts.length);
+            
+            // 배열에서 즉시 제거 (ID 타입 안전 처리)
+            const beforeCount = receipts.length;
+            receipts = receipts.filter(r => {
+                const shouldDelete = (String(r.id) === String(id) && r.id && id);
+                if (shouldDelete) {
+                    console.log('🗑️ 삭제되는 입고:', r);
+                }
+                return !shouldDelete;
+            });
+            
+            console.log(`입고 수: ${beforeCount} -> ${receipts.length}`);
+            
+            // 로컬 저장
+            localStorage.setItem('eel_receipts', JSON.stringify(receipts));
+            console.log('✅ localStorage 저장 완료');
+            
+            // Firebase 삭제 시도
+            if (isOnline && window.firebaseModules) {
+                try {
+                    deleteFromFirebase(collections.receipts, id);
+                    console.log('Firebase 삭제 요청 전송');
+                } catch (error) {
+                    console.warn('Firebase 삭제 실패:', error);
+                }
             }
             
-            receipts = receipts.filter(r => r.id !== id);
-            
-            // 항상 로컬 저장소에도 저장 (Firebase와 동기화)
-            saveToLocal();
-            
+            // UI 강제 업데이트
             updateReceiptsList();
             updateDashboard();
             updateHistoryList();
+            
+            console.log('=== 입고 삭제 완료 ===');
             alert('입고가 삭제되었습니다.');
         }
 
