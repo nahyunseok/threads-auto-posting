@@ -1234,7 +1234,7 @@
                     </div>
                     <div>
                         <button class="btn" onclick="editPartner('${partner.id}')">수정</button>
-                        <button class="btn btn-danger" onclick="forceDeletePartner('${partner.id}')">삭제</button>
+                        <button class="btn btn-danger" onclick="immediateDeletePartner('${partner.id}', '${partner.name}')">삭제</button>
                     </div>
                 `;
                 container.appendChild(partnerDiv);
@@ -1281,6 +1281,35 @@
                 console.error('거래처 수정 오류:', error);
                 alert('거래처 수정 중 오류가 발생했습니다.');
             }
+        }
+
+        // 즉시 삭제 함수 (100% 확실)
+        function immediateDeletePartner(id, name) {
+            if (!confirm(`${name} 거래처를 정말로 삭제하시겠습니까?`)) {
+                return;
+            }
+            
+            console.log('=== 즉시 삭제 시작 ===', name, id);
+            
+            // 1. 배열에서 즉시 제거
+            const beforeCount = partners.length;
+            partners = partners.filter(p => p.id !== id);
+            orders = orders.filter(o => o.partnerId !== id);
+            advances = advances.filter(a => a.partnerId !== id);
+            payments = payments.filter(p => p.partnerId !== id);
+            receipts = receipts.filter(r => r.partnerId !== id);
+            
+            console.log(`거래처 수: ${beforeCount} -> ${partners.length}`);
+            
+            // 2. 로컬 저장
+            localStorage.setItem('eel_partners', JSON.stringify(partners));
+            localStorage.setItem('eel_orders', JSON.stringify(orders));
+            localStorage.setItem('eel_advances', JSON.stringify(advances));
+            localStorage.setItem('eel_payments', JSON.stringify(payments));
+            localStorage.setItem('eel_receipts', JSON.stringify(receipts));
+            
+            // 3. 화면 즉시 새로고침
+            location.reload();
         }
 
         // 간단한 거래처 삭제 (강제 실행)
@@ -1345,7 +1374,7 @@
                             </div>
                             <div>
                                 <button class="btn" onclick="editPartner('${p.id}')">수정</button>
-                                <button class="btn btn-danger" onclick="forceDeletePartner('${p.id}')">삭제</button>
+                                <button class="btn btn-danger" onclick="immediateDeletePartner('${p.id}', '${p.name}')">삭제</button>
                             </div>
                         `;
                         container.appendChild(div);
