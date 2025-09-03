@@ -1401,17 +1401,41 @@
                 console.warn('⚠️ 오프라인 상태 - Firebase 삭제 건너뜀');
             }
             
-            // 4. UI 강제 업데이트
-            console.log('UI 업데이트 시작...');
+            // 4. 모든 UI 강제 업데이트 (관련 데이터 포함)
+            console.log('모든 UI 업데이트 시작...');
             try {
+                // 거래처 목록
                 updatePartnersList();
                 console.log('✅ updatePartnersList 완료');
+                
+                // 선주문 목록 (관련 데이터 삭제됨)
+                updateOrdersList();
+                console.log('✅ updateOrdersList 완료');
+                
+                // 외상 목록 (관련 데이터 삭제됨)
+                updateAdvancesList();
+                console.log('✅ updateAdvancesList 완료');
+                
+                // 입금 목록 (관련 데이터 삭제됨)
+                updatePaymentsList();
+                console.log('✅ updatePaymentsList 완료');
+                
+                // 입고 목록 (관련 데이터 삭제됨)
+                updateReceiptsList();
+                console.log('✅ updateReceiptsList 완료');
+                
+                // 대시보드 업데이트
                 updateDashboardStats();
                 console.log('✅ updateDashboardStats 완료');
                 updateDashboardContent();
                 console.log('✅ updateDashboardContent 완료');
+                
+                // 거래내역 및 선택 옵션 업데이트
+                updateHistoryList();
+                console.log('✅ updateHistoryList 완료');
                 updateSelects();
                 console.log('✅ updateSelects 완료');
+                
             } catch (error) {
                 console.error('❌ UI 업데이트 실패:', error);
             }
@@ -2708,11 +2732,8 @@
             loadLocalData();
             console.log('로컬 데이터 로드 후 partners 수:', partners.length);
             
-            // 데이터가 없으면 테스트 데이터 생성 (개발/테스트용)
-            if (partners.length === 0 && orders.length === 0) {
-                console.log('데이터가 없음 - 샘플 데이터 추가');
-                addSampleData();
-            }
+            // 샘플 데이터 생성 비활성화 (프로덕션 환경)
+            console.log('샘플 데이터 생성 건너뜀 - 프로덕션 모드');
             
             // UI 즉시 업데이트
             updateAllLists();
