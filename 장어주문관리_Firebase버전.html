@@ -2641,15 +2641,15 @@
             alert('입고가 삭제되었습니다.');
         }
 
-        // 모든 데이터 초기화 함수
+        // 강력한 데이터 초기화 함수
         function clearAllData() {
-            if (!confirm('⚠️ 모든 데이터가 삭제됩니다!\n\n로컬 저장소의 모든 데이터를 삭제하시겠습니까?\n(Firebase 데이터는 유지됩니다)')) {
+            if (!confirm('⚠️ 강력한 캐시 삭제\n\n로컬 저장소를 완전히 삭제하고\n페이지를 새로고침합니다.\n\n계속하시겠습니까?')) {
                 return;
             }
             
-            console.log('=== 데이터 초기화 시작 ===');
+            console.log('=== 강력한 데이터 초기화 시작 ===');
             
-            // 로컬 저장소 완전 삭제
+            // localStorage 완전 삭제
             localStorage.removeItem('eel_partners');
             localStorage.removeItem('eel_orders');
             localStorage.removeItem('eel_advances');
@@ -2657,29 +2657,34 @@
             localStorage.removeItem('eel_receipts');
             localStorage.removeItem('eel_partnerPrices');
             
-            console.log('✅ localStorage 완전 삭제');
-            
-            // 변수 초기화
-            partners = [];
-            orders = [];
-            advances = [];
-            payments = [];
-            receipts = [];
-            partnerPrices = {};
-            
-            console.log('✅ 변수 초기화 완료');
-            
-            // Firebase에서 다시 로드 시도
-            if (isOnline && window.firebaseModules) {
-                console.log('Firebase에서 최신 데이터 로드 시도...');
-                loadFirebaseData();
-            } else {
-                // UI 업데이트
-                updateAllLists();
+            // sessionStorage도 삭제
+            if (typeof sessionStorage !== 'undefined') {
+                sessionStorage.removeItem('eel_partners');
+                sessionStorage.removeItem('eel_orders');
+                sessionStorage.removeItem('eel_advances');
+                sessionStorage.removeItem('eel_payments');
+                sessionStorage.removeItem('eel_receipts');
+                sessionStorage.removeItem('eel_partnerPrices');
             }
             
-            console.log('=== 데이터 초기화 완료 ===');
-            alert('데이터가 초기화되었습니다.\nFirebase에서 최신 데이터를 다시 로드합니다.');
+            // 모든 localStorage 항목 중 'eel_' 로 시작하는 것 삭제
+            try {
+                Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith('eel_')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+            } catch (e) {
+                console.log('localStorage 추가 정리 실패:', e);
+            }
+            
+            console.log('✅ 모든 저장소 완전 삭제');
+            console.log('🔄 페이지 강제 새로고침으로 깨끗한 상태 로드');
+            
+            // 페이지 강제 새로고침 (캐시 완전 무시)
+            setTimeout(() => {
+                window.location.href = window.location.href + '?t=' + Date.now();
+            }, 100);
         }
 
         // 샘플 데이터 추가 함수

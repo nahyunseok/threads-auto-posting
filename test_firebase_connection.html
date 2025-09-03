@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase 연결 테스트</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .status {
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .connected { background: #d4edda; color: #155724; }
+        .disconnected { background: #f8d7da; color: #721c24; }
+        .loading { background: #fff3cd; color: #856404; }
+        .data {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        pre {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔥 Firebase 연결 테스트</h1>
+    
+    <div id="status" class="status loading">연결 중...</div>
+    
+    <div class="data">
+        <h2>데이터베이스 정보</h2>
+        <pre id="dbInfo">로딩 중...</pre>
+    </div>
+    
+    <div class="data">
+        <h2>테스트 결과</h2>
+        <pre id="testResult">테스트 대기 중...</pre>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+        import { getFirestore, collection, addDoc, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+        
+        // Firebase 설정 (jangeo-trade 프로젝트)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCXjZ8Gi5fDBUDzqM29V-BtLluiTECcUQM",
+            authDomain: "jangeo-trade.firebaseapp.com",
+            projectId: "jangeo-trade",
+            storageBucket: "jangeo-trade.firebasestorage.app",
+            messagingSenderId: "783900173125",
+            appId: "1:783900173125:web:d57cbfe31e178d0ba8d42c"
+        };
+        
+        const statusEl = document.getElementById('status');
+        const dbInfoEl = document.getElementById('dbInfo');
+        const testResultEl = document.getElementById('testResult');
+        
+        async function testConnection() {
+            try {
+                // Firebase 초기화
+                const app = initializeApp(firebaseConfig);
+                const db = getFirestore(app);
+                
+                statusEl.className = 'status connected';
+                statusEl.textContent = '✅ Firebase 연결 성공!';
+                
+                // 데이터베이스 정보 표시
+                dbInfoEl.textContent = JSON.stringify({
+                    projectId: firebaseConfig.projectId,
+                    authDomain: firebaseConfig.authDomain,
+                    상태: '정상 연결'
+                }, null, 2);
+                
+                // 테스트 데이터 쓰기/읽기
+                const testResults = [];
+                
+                // 1. 테스트 데이터 쓰기
+                testResults.push('📝 테스트 데이터 쓰기 시도...');
+                const testData = {
+                    test: true,
+                    timestamp: serverTimestamp(),
+                    message: '연결 테스트',
+                    createdAt: new Date().toISOString()
+                };
+                
+                const docRef = await addDoc(collection(db, 'test'), testData);
+                testResults.push(`✅ 데이터 쓰기 성공! (문서 ID: ${docRef.id})`);
+                
+                // 2. 데이터 읽기
+                testResults.push('📖 데이터 읽기 시도...');
+                const querySnapshot = await getDocs(collection(db, 'test'));
+                testResults.push(`✅ 데이터 읽기 성공! (${querySnapshot.size}개 문서 발견)`);
+                
+                // 3. 주문 컬렉션 확인
+                testResults.push('📦 주문 컬렉션 확인...');
+                const ordersSnapshot = await getDocs(collection(db, 'orders'));
+                testResults.push(`✅ 주문 데이터: ${ordersSnapshot.size}개`);
+                
+                // 4. 거래처 컬렉션 확인
+                testResults.push('🏢 거래처 컬렉션 확인...');
+                const clientsSnapshot = await getDocs(collection(db, 'clients'));
+                testResults.push(`✅ 거래처 데이터: ${clientsSnapshot.size}개`);
+                
+                testResultEl.textContent = testResults.join('\n');
+                
+            } catch (error) {
+                statusEl.className = 'status disconnected';
+                statusEl.textContent = '❌ Firebase 연결 실패';
+                
+                dbInfoEl.textContent = '연결 실패';
+                testResultEl.textContent = `오류 발생:\n${error.message}\n\n상세 정보:\n${error.stack}`;
+            }
+        }
+        
+        // 페이지 로드 시 테스트 실행
+        testConnection();
+    </script>
+</body>
+</html>
