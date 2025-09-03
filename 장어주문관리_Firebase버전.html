@@ -405,6 +405,7 @@
         <div class="header">
             <div id="connectionStatus" class="connection-status status-loading">
                 🔄 Firebase 연결 확인 중...
+                <button onclick="clearAllData()" style="margin-left: 10px; padding: 4px 8px; font-size: 11px; background: #ef4444; color: white; border: none; border-radius: 3px; cursor: pointer; opacity: 0.8;">🗑️ 초기화</button>
             </div>
             <h1>🐍 장어 주문관리 시스템</h1>
             <p>Firebase 클라우드 동기화 버전 - 모든 기기에서 동일한 데이터</p>
@@ -2638,6 +2639,47 @@
             
             console.log('=== 입고 삭제 완료 ===');
             alert('입고가 삭제되었습니다.');
+        }
+
+        // 모든 데이터 초기화 함수
+        function clearAllData() {
+            if (!confirm('⚠️ 모든 데이터가 삭제됩니다!\n\n로컬 저장소의 모든 데이터를 삭제하시겠습니까?\n(Firebase 데이터는 유지됩니다)')) {
+                return;
+            }
+            
+            console.log('=== 데이터 초기화 시작 ===');
+            
+            // 로컬 저장소 완전 삭제
+            localStorage.removeItem('eel_partners');
+            localStorage.removeItem('eel_orders');
+            localStorage.removeItem('eel_advances');
+            localStorage.removeItem('eel_payments');
+            localStorage.removeItem('eel_receipts');
+            localStorage.removeItem('eel_partnerPrices');
+            
+            console.log('✅ localStorage 완전 삭제');
+            
+            // 변수 초기화
+            partners = [];
+            orders = [];
+            advances = [];
+            payments = [];
+            receipts = [];
+            partnerPrices = {};
+            
+            console.log('✅ 변수 초기화 완료');
+            
+            // Firebase에서 다시 로드 시도
+            if (isOnline && window.firebaseModules) {
+                console.log('Firebase에서 최신 데이터 로드 시도...');
+                loadFirebaseData();
+            } else {
+                // UI 업데이트
+                updateAllLists();
+            }
+            
+            console.log('=== 데이터 초기화 완료 ===');
+            alert('데이터가 초기화되었습니다.\nFirebase에서 최신 데이터를 다시 로드합니다.');
         }
 
         // 샘플 데이터 추가 함수
