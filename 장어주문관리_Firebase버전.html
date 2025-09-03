@@ -706,11 +706,13 @@
         // Firebase 데이터 로드
         async function loadFirebaseData() {
             if (!isOnline || !window.firebaseModules) {
+                console.log('오프라인 모드 - 로컬 데이터 로드');
                 loadLocalData();
                 return;
             }
 
             try {
+                console.log('Firebase에서 데이터 로드 시작...');
                 const { collection, getDocs } = window.firebaseModules;
                 
                 // 모든 컬렉션 병렬 로드
@@ -730,24 +732,54 @@
                     getDocs(collection(db, collections.partnerPrices))
                 ]);
 
-                partners = partnersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                orders = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                advances = advancesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                payments = paymentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                receipts = receiptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // Firebase 데이터를 배열로 변환
+                const firebasePartners = partnersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const firebaseOrders = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const firebaseAdvances = advancesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const firebasePayments = paymentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const firebaseReceipts = receiptsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 
                 // 가격 데이터는 객체로 변환
-                partnerPrices = {};
+                const firebasePrices = {};
                 pricesSnapshot.docs.forEach(doc => {
-                    partnerPrices[doc.id] = doc.data();
+                    firebasePrices[doc.id] = doc.data();
                 });
 
-                console.log('Firebase 데이터 로드 완료');
+                console.log('Firebase에서 로드된 데이터:', {
+                    partners: firebasePartners.length,
+                    orders: firebaseOrders.length,
+                    advances: firebaseAdvances.length,
+                    payments: firebasePayments.length,
+                    receipts: receipts.length,
+                    prices: Object.keys(firebasePrices).length
+                });
+
+                // 로컬 데이터와 병합 (Firebase 데이터 우선)
+                partners = firebasePartners.length > 0 ? firebasePartners : partners;
+                orders = firebaseOrders.length > 0 ? firebaseOrders : orders;
+                advances = firebaseAdvances.length > 0 ? firebaseAdvances : advances;
+                payments = firebasePayments.length > 0 ? firebasePayments : payments;
+                receipts = firebaseReceipts.length > 0 ? firebaseReceipts : receipts;
+                partnerPrices = Object.keys(firebasePrices).length > 0 ? firebasePrices : partnerPrices;
+
+                // 병합된 데이터를 로컬에도 저장 (동기화)
+                saveToLocal();
+
+                console.log('최종 데이터 (Firebase 우선 병합):', {
+                    partners: partners.length,
+                    orders: orders.length,
+                    advances: advances.length,
+                    payments: payments.length,
+                    receipts: receipts.length,
+                    prices: Object.keys(partnerPrices).length
+                });
+
                 updateAllLists();
                 
             } catch (error) {
                 console.error('Firebase 데이터 로드 실패:', error);
                 // Firebase 실패 시 localStorage로 폴백
+                console.log('Firebase 실패 - 로컬 데이터로 폴백');
                 loadLocalData();
             }
         }
@@ -860,6 +892,8 @@
                 return;
             }
 
+            console.log('거래처 추가 시작:', name);
+
             const partner = {
                 name: name,
                 phone: phone,
@@ -868,17 +902,33 @@
                 createdAt: new Date().toISOString()
             };
 
-            if (isOnline) {
-                const docId = await saveToFirebase(collections.partners, partner);
-                partner.id = docId;
-            } else {
-                partner.id = generateId();
-            }
+            try {
+                // Firebase에 저장 시도 (온라인일 때)
+                if (isOnline && window.firebaseModules) {
+                    console.log('Firebase에 거래처 저장 중...');
+                    const docId = await saveToFirebase(collections.partners, partner);
+                    partner.id = docId;
+                    console.log('Firebase 저장 완료, ID:', docId);
+                } else {
+                    console.log('오프라인 모드 - 로컬 ID 생성');
+                    partner.id = generateId();
+                }
 
-            partners.push(partner);
-            
-            if (!isOnline) {
+                // 로컬 배열에 추가
+                partners.push(partner);
+                console.log('거래처 배열에 추가 완료, 총 개수:', partners.length);
+                
+                // 항상 로컬 저장소에도 저장 (동기화 보장)
                 saveToLocal();
+                console.log('로컬 저장소 업데이트 완료');
+
+            } catch (error) {
+                console.error('거래처 추가 중 오류:', error);
+                // Firebase 실패시 로컬에만 저장
+                partner.id = generateId();
+                partners.push(partner);
+                saveToLocal();
+                console.log('Firebase 실패 - 로컬에만 저장');
             }
 
             // 입력 필드 초기화
@@ -2240,8 +2290,11 @@
                 if (input) input.value = today;
             });
 
-            // 초기 데이터 로드
-            loadFirebaseData();
+            // 초기 데이터 로드 (로컬 먼저, 그다음 Firebase)
+            console.log('페이지 로드 완료 - 데이터 초기화 시작');
+            loadLocalData(); // 먼저 로컬 데이터 로드하여 즉시 표시
+            updateAllLists(); // UI 즉시 업데이트
+            loadFirebaseData(); // 그 다음 Firebase 데이터로 동기화
         });
     </script>
 </body>
