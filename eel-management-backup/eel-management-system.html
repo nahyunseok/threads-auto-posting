@@ -1,0 +1,3590 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐍 장어 주문관리 시스템 (개선버전 v2.1)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #e8f5e8 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #1f2937;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            background: white;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        
+        .nav-tab {
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 8px;
+            margin-right: 10px;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        
+        .nav-tab.active {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .nav-tab:hover {
+            background: #e5e7eb;
+        }
+        
+        .nav-tab.active:hover {
+            background: #2563eb;
+        }
+        
+        .content {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        
+        .btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .btn:hover {
+            background: #2563eb;
+        }
+        
+        .btn-success {
+            background: #10b981;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        
+        .btn-warning {
+            background: #f59e0b;
+        }
+        
+        .btn-warning:hover {
+            background: #d97706;
+        }
+        
+        .grid {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+        
+        .grid-4 {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        
+        .stats-card.red {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+        
+        .stats-card.orange {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+        
+        .stats-card.green {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        
+        .stats-card.purple {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        }
+        
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin: 15px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            line-height: 1.1;
+        }
+        
+        .detail-label {
+            font-size: 1rem;
+            color: #6b7280;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        
+        .stats-card .detail-label {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 8px;
+            font-weight: 700;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        .partner-card {
+            border-left: 4px solid #3b82f6;
+            margin-bottom: 15px;
+        }
+        
+        .partner-card.warning {
+            border-left-color: #f59e0b;
+            background: #fefbf0;
+        }
+        
+        .partner-card.completed {
+            border-left-color: #10b981;
+            background: #f0fdf4;
+        }
+        
+        .partner-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .partner-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #1f2937;
+        }
+        
+        .partner-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .detail-item {
+            text-align: center;
+            padding: 10px;
+            background: #f9fafb;
+            border-radius: 6px;
+        }
+        
+        .detail-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+        
+        .detail-value {
+            font-weight: bold;
+            color: #1f2937;
+        }
+        
+        .hide {
+            display: none !important;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .text-gray {
+            color: #6b7280;
+        }
+        
+        .text-red {
+            color: #ef4444;
+        }
+        
+        .text-orange {
+            color: #f59e0b;
+        }
+        
+        .text-green {
+            color: #10b981;
+        }
+        
+        .text-purple {
+            color: #8b5cf6;
+        }
+        
+        .delete-btn {
+            background: #f3f4f6;
+            color: #6b7280;
+            border: none;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .delete-btn:hover {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .payment-breakdown {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 6px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 0.875rem;
+        }
+        
+        .advance-indicator {
+            background: #fef3c7;
+            color: #d97706;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+        
+        /* 장어단가 달력 스타일 */
+        .price-calendar-container {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .price-calendar {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            min-width: 300px;
+            padding: 15px;
+            display: none;
+        }
+        
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .calendar-nav-btn {
+            background: #f3f4f6;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .calendar-nav-btn:hover {
+            background: #e5e7eb;
+        }
+        
+        .calendar-month-year {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+        
+        .calendar-day-header {
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: #6b7280;
+            padding: 8px 4px;
+        }
+        
+        .calendar-day {
+            text-align: center;
+            padding: 8px 4px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            position: relative;
+            min-height: 35px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .calendar-day:hover {
+            background: #f3f4f6;
+        }
+        
+        .calendar-day.other-month {
+            color: #d1d5db;
+        }
+        
+        .calendar-day.today {
+            background: #3b82f6;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .calendar-day.selected {
+            background: #10b981;
+            color: white;
+        }
+        
+        .calendar-day .day-price {
+            font-size: 9px;
+            color: #f59e0b;
+            font-weight: bold;
+            margin-top: 2px;
+        }
+        
+        .calendar-day.today .day-price,
+        .calendar-day.selected .day-price {
+            color: #fef3c7;
+        }
+        
+        .calendar-footer {
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .calendar-price-input {
+            flex: 1;
+            padding: 6px 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .calendar-save-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .calendar-save-btn:hover {
+            background: #2563eb;
+        }
+        
+        .calendar-save-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .nav-tabs {
+                flex-wrap: wrap;
+            }
+            
+            .partner-info {
+                flex-direction: column;
+            }
+            
+            .partner-details {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .price-calendar {
+                min-width: 280px;
+                left: -50px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🐍 장어 주문관리 시스템 (개선버전)</h1>
+            <p class="text-gray" id="currentDate"></p>
+        </header>
+        
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('dashboard', this)">📊 대시보드</button>
+            <button class="nav-tab" onclick="showTab('partners', this)">👥 거래처 관리</button>
+            <button class="nav-tab" onclick="showTab('orders', this)">📦 선주문 관리</button>
+            <button class="nav-tab" onclick="showTab('advance', this)">💳 외상 관리</button>
+            <button class="nav-tab" onclick="showTab('payments', this)">💰 입금 관리</button>
+            <button class="nav-tab" onclick="showTab('receipts', this)">📥 입고 관리</button>
+            <button class="nav-tab" onclick="showTab('dataView', this)">📋 거래내역확인</button>
+        </div>
+        
+        <!-- 대시보드 -->
+        <div id="dashboard" class="content">
+            <div class="grid grid-4" id="statsCards">
+                <!-- 통계 카드들이 여기에 동적으로 생성됩니다 -->
+            </div>
+            
+            <div class="grid grid-2" style="margin-top: 30px;">
+                <div>
+                    <h3 style="margin-bottom: 20px;">거래처 현황</h3>
+                    <div id="partnersList">
+                        <!-- 모든 거래처들이 여기에 표시됩니다 -->
+                    </div>
+                </div>
+                <div>
+                    <h3 style="margin-bottom: 20px;">메모 목록</h3>
+                    <div id="memoList">
+                        <!-- 최근 메모들이 여기에 표시됩니다 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 거래처 관리 -->
+        <div id="partners" class="content hide">
+            <h3 style="margin-bottom: 20px;" id="partnerFormTitle">거래처 등록</h3>
+            <div class="grid grid-2">
+                <div class="form-group">
+                    <label>거래처명</label>
+                    <input type="text" id="partnerName" placeholder="거래처명을 입력하세요">
+                </div>
+                <div class="form-group">
+                    <label>연락처</label>
+                    <input type="text" id="partnerContact" placeholder="연락처를 입력하세요">
+                </div>
+            </div>
+            <input type="hidden" id="partnerEditId" value="">
+            <div id="partnerFormButtons">
+                <button class="btn btn-success" onclick="addPartner()">거래처 등록</button>
+            </div>
+            
+            <h3 style="margin: 30px 0 20px 0;">거래처 목록</h3>
+            <div id="partnersListManage">
+                <!-- 거래처 목록이 여기에 표시됩니다 -->
+            </div>
+            
+            <div class="history-section">
+                <h3 style="margin-bottom: 20px;">📋 거래처별 전체 내역</h3>
+                <div class="history-filters">
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label>거래처 선택</label>
+                            <select id="historyPartnerSelect" onchange="loadPartnerHistory()">
+                                <option value="">거래처를 선택하세요</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>기간 필터</label>
+                            <select id="historyPeriodFilter" onchange="loadPartnerHistory()">
+                                <option value="all">전체 기간</option>
+                                <option value="7">최근 7일</option>
+                                <option value="30">최근 30일</option>
+                                <option value="90">최근 3개월</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div id="partnerHistoryList">
+                    <div class="no-history">거래처를 선택하면 전체 거래 내역이 표시됩니다.</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 선주문 관리 -->
+        <div id="orders" class="content hide">
+            <h3 style="margin-bottom: 20px;">선주문 등록</h3>
+            <div class="grid grid-2">
+                <div class="form-group">
+                    <label>거래처</label>
+                    <select id="orderPartner">
+                        <option value="">거래처를 선택하세요</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>주문일</label>
+                    <input type="date" id="orderDate">
+                </div>
+                <div class="form-group">
+                    <label>수량 (kg)</label>
+                    <input type="number" id="orderQuantity" placeholder="수량을 입력하세요" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>단가 (원/kg)</label>
+                    <input type="number" id="orderPrice" placeholder="단가를 입력하세요">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>비고</label>
+                <textarea id="orderMemo" placeholder="메모나 특이사항을 입력하세요" style="height: 80px;"></textarea>
+            </div>
+            <div id="orderTotalAmount" style="margin: 10px 0; font-weight: bold; color: #3b82f6;"></div>
+            <button class="btn btn-success" onclick="addOrder()">선주문 등록</button>
+            
+            <div class="history-section">
+                <h3 style="margin-bottom: 20px;">📋 선주문 내역</h3>
+                <div class="history-filters">
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label>거래처 필터</label>
+                            <select id="orderHistoryPartner" onchange="loadOrderHistory()">
+                                <option value="">전체 거래처</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>기간 필터</label>
+                            <select id="orderHistoryPeriod" onchange="loadOrderHistory()">
+                                <option value="all">전체 기간</option>
+                                <option value="7">최근 7일</option>
+                                <option value="30">최근 30일</option>
+                                <option value="90">최근 3개월</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div id="orderHistoryList">
+                    <!-- 선주문 내역이 여기에 표시됩니다 -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- 외상 관리 -->
+        <div id="advance" class="content hide">
+            <h3 style="margin-bottom: 20px;">외상 등록</h3>
+            <div class="grid grid-2">
+                <div class="form-group">
+                    <label>거래처</label>
+                    <select id="advancePartner">
+                        <option value="">거래처를 선택하세요</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>외상일</label>
+                    <input type="date" id="advanceDate">
+                </div>
+                <div class="form-group">
+                    <label>수량 (kg)</label>
+                    <input type="number" id="advanceQuantity" placeholder="수량을 입력하세요" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label>단가 (원/kg)</label>
+                    <input type="number" id="advancePrice" placeholder="단가를 입력하세요">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>비고</label>
+                <textarea id="advanceMemo" placeholder="메모나 특이사항을 입력하세요" style="height: 80px;"></textarea>
+            </div>
+            <div id="advanceTotalAmount" style="margin: 10px 0; font-weight: bold; color: #f59e0b;"></div>
+            <button class="btn btn-warning" onclick="addAdvance()">외상 등록</button>
+            
+            <div class="history-section">
+                <h3 style="margin-bottom: 20px;">📋 외상 내역</h3>
+                <div class="history-filters">
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label>거래처 필터</label>
+                            <select id="advanceHistoryPartner" onchange="loadAdvanceHistory()">
+                                <option value="">전체 거래처</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>기간 필터</label>
+                            <select id="advanceHistoryPeriod" onchange="loadAdvanceHistory()">
+                                <option value="all">전체 기간</option>
+                                <option value="7">최근 7일</option>
+                                <option value="30">최근 30일</option>
+                                <option value="90">최근 3개월</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div id="advanceHistoryList">
+                    <!-- 외상 내역이 여기에 표시됩니다 -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- 입금 관리 -->
+        <div id="payments" class="content hide">
+            <h3 style="margin-bottom: 20px;">입금 등록</h3>
+            <div class="grid grid-2">
+                <div class="form-group">
+                    <label>거래처</label>
+                    <select id="paymentPartner" onchange="updatePaymentInfo()">
+                        <option value="">거래처를 선택하세요</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>입금일</label>
+                    <input type="date" id="paymentDate">
+                </div>
+                <div class="form-group">
+                    <label>입금 유형</label>
+                    <select id="paymentType" onchange="updatePaymentTypeInfo()">
+                        <option value="auto">자동 정산 (외상 우선)</option>
+                        <option value="advance">외상만 정산</option>
+                        <option value="order">선주문만 정산</option>
+                        <option value="custom">직접 지정</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>입금액 (원)</label>
+                    <input type="number" id="paymentAmount" placeholder="입금액을 입력하세요" onchange="calculatePaymentBreakdown()">
+                </div>
+            </div>
+            <div id="customPaymentAllocation" class="grid grid-2" style="display: none; margin-top: 20px;">
+                <div class="form-group">
+                    <label>외상 정산액 (원)</label>
+                    <input type="number" id="customAdvanceAmount" placeholder="외상 정산액" onchange="updateCustomTotal()">
+                    <small id="maxAdvanceInfo" class="text-gray"></small>
+                </div>
+                <div class="form-group">
+                    <label>선주문 정산액 (원)</label>
+                    <input type="number" id="customOrderAmount" placeholder="선주문 정산액" onchange="updateCustomTotal()">
+                    <small id="maxOrderInfo" class="text-gray"></small>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>비고</label>
+                <textarea id="paymentMemo" placeholder="입금 관련 메모나 특이사항을 입력하세요" style="height: 80px;"></textarea>
+            </div>
+            <div id="paymentInfo" class="payment-breakdown" style="display: none;">
+                <!-- 입금 정산 내역이 여기에 표시됩니다 -->
+            </div>
+            <button class="btn btn-success" onclick="addPayment()">입금 등록</button>
+            
+            <div class="history-section">
+                <h3 style="margin-bottom: 20px;">📋 입금 내역</h3>
+                <div class="history-filters">
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label>거래처 필터</label>
+                            <select id="paymentHistoryPartner" onchange="loadPaymentHistory()">
+                                <option value="">전체 거래처</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>기간 필터</label>
+                            <select id="paymentHistoryPeriod" onchange="loadPaymentHistory()">
+                                <option value="all">전체 기간</option>
+                                <option value="7">최근 7일</option>
+                                <option value="30">최근 30일</option>
+                                <option value="90">최근 3개월</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div id="paymentHistoryList">
+                    <!-- 입금 내역이 여기에 표시됩니다 -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- 입고 관리 -->
+        <div id="receipts" class="content hide">
+            <h3 style="margin-bottom: 20px;">입고 등록</h3>
+            <div class="grid grid-2">
+                <div class="form-group">
+                    <label>거래처</label>
+                    <select id="receiptPartner">
+                        <option value="">거래처를 선택하세요</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>입고일</label>
+                    <input type="date" id="receiptDate">
+                </div>
+                <div class="form-group">
+                    <label>입고량 (kg)</label>
+                    <input type="number" id="receiptQuantity" placeholder="입고량을 입력하세요" step="0.1">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>비고</label>
+                <textarea id="receiptMemo" placeholder="입고 관련 메모나 특이사항을 입력하세요" style="height: 80px;"></textarea>
+            </div>
+            <button class="btn btn-success" onclick="addReceipt()">입고 등록</button>
+            
+            <div class="history-section">
+                <h3 style="margin-bottom: 20px;">📋 입고 내역</h3>
+                <div class="history-filters">
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label>거래처 필터</label>
+                            <select id="receiptHistoryPartner" onchange="loadReceiptHistory()">
+                                <option value="">전체 거래처</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>기간 필터</label>
+                            <select id="receiptHistoryPeriod" onchange="loadReceiptHistory()">
+                                <option value="all">전체 기간</option>
+                                <option value="7">최근 7일</option>
+                                <option value="30">최근 30일</option>
+                                <option value="90">최근 3개월</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div id="receiptHistoryList">
+                    <!-- 입고 내역이 여기에 표시됩니다 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 저장된 정보 확인 -->
+        <div id="dataView" class="content hide">
+            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0;">📋 거래내역확인</h3>
+                <div>
+                    <button class="btn btn-success" onclick="exportFilteredData()" style="padding: 8px 16px; font-size: 14px;">📄 출력</button>
+                </div>
+            </div>
+
+            <!-- 필터 섹션 -->
+            <div class="card" style="margin-bottom: 20px;">
+                <h4 style="margin-bottom: 15px;">🔍 데이터 필터</h4>
+                <div class="grid grid-4">
+                    <div class="form-group">
+                        <label>데이터 유형</label>
+                        <select id="dataTypeFilter" onchange="filterData()">
+                            <option value="all">전체</option>
+                            <option value="partners">거래처</option>
+                            <option value="orders">선주문</option>
+                            <option value="advances">외상</option>
+                            <option value="payments">입금</option>
+                            <option value="receipts">입고</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>거래처 필터</label>
+                        <select id="dataPartnerFilter" onchange="filterData()">
+                            <option value="">전체 거래처</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>시작 날짜</label>
+                        <input type="date" id="dataStartDate" onchange="filterData()">
+                    </div>
+                    <div class="form-group">
+                        <label>종료 날짜</label>
+                        <input type="date" id="dataEndDate" onchange="filterData()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 데이터 표시 섹션 -->
+            <div id="dataViewContainer">
+                <!-- 필터된 데이터가 여기에 표시됩니다 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수들
+        let partners = [];        // 거래처 목록
+        let orders = [];         // 선주문 목록
+        let advances = [];       // 외상 목록
+        let payments = [];       // 입금 목록
+        let receipts = [];       // 입고 목록
+        let partnerStatus = new Map(); // 거래처별 상태 (선주문 줄돈, 외상 줄돈, 받을장어)
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            // 저장된 데이터 로드
+            loadData();
+            
+            updateCurrentDate();
+            setTodayDates();
+            updateAllSelects();
+            setupCalculators();
+            
+            // 대시보드를 여러 번 업데이트
+            updateDashboard();
+            setTimeout(() => {
+                updateDashboard();
+            }, 100);
+            setTimeout(() => {
+                updateDashboard();
+            }, 500);
+        });
+
+        // 현재 날짜 표시
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                weekday: 'long'
+            };
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('ko-KR', options);
+        }
+
+        // 오늘 날짜로 설정 (한국시간 기준)
+        function setTodayDates() {
+            const today = new Date();
+            // 한국시간으로 변환 (UTC+9)
+            const kstOffset = 9 * 60; // 9시간을 분으로 변환
+            const kstTime = new Date(today.getTime() + (kstOffset * 60 * 1000));
+            const todayKST = kstTime.toISOString().split('T')[0];
+            
+            document.getElementById('orderDate').value = todayKST;
+            document.getElementById('advanceDate').value = todayKST;
+            document.getElementById('paymentDate').value = todayKST;
+            document.getElementById('receiptDate').value = todayKST;
+        }
+
+        // 계산기 설정
+        function setupCalculators() {
+            ['orderQuantity', 'orderPrice'].forEach(id => {
+                document.getElementById(id).addEventListener('input', calculateOrderTotal);
+            });
+            ['advanceQuantity', 'advancePrice'].forEach(id => {
+                document.getElementById(id).addEventListener('input', calculateAdvanceTotal);
+            });
+        }
+
+        // 선주문 총액 계산
+        function calculateOrderTotal() {
+            const quantity = parseFloat(document.getElementById('orderQuantity').value) || 0;
+            const price = parseFloat(document.getElementById('orderPrice').value) || 0;
+            const total = quantity * price;
+            
+            const totalElement = document.getElementById('orderTotalAmount');
+            if (total > 0) {
+                totalElement.textContent = `총 금액: ${formatCurrency(total)}`;
+            } else {
+                totalElement.textContent = '';
+            }
+        }
+
+        // 외상 총액 계산
+        function calculateAdvanceTotal() {
+            const quantity = parseFloat(document.getElementById('advanceQuantity').value) || 0;
+            const price = parseFloat(document.getElementById('advancePrice').value) || 0;
+            const total = quantity * price;
+            
+            const totalElement = document.getElementById('advanceTotalAmount');
+            if (total > 0) {
+                totalElement.textContent = `총 금액: ${formatCurrency(total)}`;
+            } else {
+                totalElement.textContent = '';
+            }
+        }
+
+        // 데이터 로드
+        function loadData() {
+            try {
+                const savedData = localStorage.getItem('eelOrderDataV2');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    partners = data.partners || [];
+                    orders = data.orders || [];
+                    advances = data.advances || [];
+                    payments = data.payments || [];
+                    receipts = data.receipts || [];
+                    
+                    // 기존 데이터 마이그레이션
+                    if (data.partnerStatus) {
+                        partnerStatus = new Map(Object.entries(data.partnerStatus));
+                    } else {
+                        calculatePartnerStatus();
+                    }
+                } else {
+                    // 저장된 데이터가 없으면 초기 데이터로 설정
+                    initializeData();
+                }
+            } catch (error) {
+                console.error('데이터 로드 오류:', error);
+                initializeData();
+            }
+        }
+
+        // 데이터 초기화 (스크린샷 데이터 포함)
+        function initializeData() {
+            partners = [
+                {
+                    id: 'partner_seungduyeong',
+                    name: '승두영',
+                    phone: '',
+                    address: '',
+                    createdAt: '2025-08-29T09:00:00.000Z'
+                },
+                {
+                    id: 'partner_hwangsil',
+                    name: '황실분점',
+                    phone: '',
+                    address: '',
+                    createdAt: '2025-08-23T09:00:00.000Z'
+                }
+            ];
+            
+            orders = [
+                {
+                    id: 'order_seungduyeong_001',
+                    partnerId: 'partner_seungduyeong',
+                    partnerName: '승두영',
+                    quantity: 150,
+                    pricePerKg: 28000,
+                    totalAmount: 4200000,
+                    date: '2025-08-29',
+                    memo: '오늘 30키로 내가 받아서 150 키로남음',
+                    status: 'pending'
+                }
+            ];
+            
+            advances = [
+                {
+                    id: 'advance_hwangsil_001',
+                    partnerId: 'partner_hwangsil',
+                    partnerName: '황실분점',
+                    quantity: 0,
+                    pricePerKg: 0,
+                    totalAmount: 8702500,
+                    date: '2025-08-23',
+                    memo: '외상으로 금액 맞드라 수정한거임 외상 8702500 이랬음',
+                    status: 'pending'
+                }
+            ];
+            
+            payments = [];
+            receipts = [];
+            
+            // 거래처 상태 계산
+            partnerStatus = new Map();
+            partnerStatus.set('partner_seungduyeong', {
+                pending_payment_order: 4600000,
+                pending_payment_advance: 0,
+                pending_eel_kg: 150
+            });
+            partnerStatus.set('partner_hwangsil', {
+                pending_payment_order: 0,
+                pending_payment_advance: 8702500,
+                pending_eel_kg: 0
+            });
+            
+            // 가격 정보 저장
+            localStorage.setItem('partnerPrice_partner_seungduyeong', '28000');
+            
+            // 데이터 저장
+            saveData();
+            
+            // 즉시 대시보드 업데이트
+            updateDashboard();
+        }
+
+        // 데이터 저장
+        function saveData() {
+            try {
+                const data = { 
+                    partners, 
+                    orders, 
+                    advances, 
+                    payments, 
+                    receipts,
+                    partnerStatus: Object.fromEntries(partnerStatus)
+                };
+                localStorage.setItem('eelOrderDataV2', JSON.stringify(data));
+            } catch (error) {
+                console.error('데이터 저장 오류:', error);
+                alert('데이터 저장에 실패했습니다.');
+            }
+        }
+
+        // 거래처 상태 계산
+        function calculatePartnerStatus() {
+            partnerStatus.clear();
+            
+            partners.forEach(partner => {
+                partnerStatus.set(partner.id, {
+                    pending_payment_order: 0,    // 선주문 줄돈
+                    pending_payment_advance: 0,  // 외상 줄돈
+                    pending_eel_kg: 0            // 받을장어
+                });
+            });
+            
+            // 선주문 처리
+            orders.forEach(order => {
+                const status = partnerStatus.get(order.partnerId);
+                if (status) {
+                    status.pending_payment_order += order.totalAmount;
+                    status.pending_eel_kg += order.quantity;
+                }
+            });
+            
+            // 외상 처리
+            advances.forEach(advance => {
+                const status = partnerStatus.get(advance.partnerId);
+                if (status) {
+                    status.pending_payment_advance += advance.totalAmount;
+                    status.pending_eel_kg += advance.quantity;
+                }
+            });
+            
+            // 입금 처리 (신규 데이터 구조 사용)
+            payments.forEach(payment => {
+                const status = partnerStatus.get(payment.partnerId);
+                if (status) {
+                    // 신규 입금 데이터에 정산 정보가 있으면 사용
+                    if (payment.advancePayment !== undefined && payment.orderPayment !== undefined) {
+                        status.pending_payment_advance -= payment.advancePayment;
+                        status.pending_payment_order -= payment.orderPayment;
+                    } else {
+                        // 기존 데이터는 기존 방식으로 처리 (외상 우선)
+                        let remainingAmount = payment.amount;
+                        
+                        // 외상 줄돈에서 먼저 차감
+                        if (status.pending_payment_advance > 0 && remainingAmount > 0) {
+                            const advancePayment = Math.min(status.pending_payment_advance, remainingAmount);
+                            status.pending_payment_advance -= advancePayment;
+                            remainingAmount -= advancePayment;
+                        }
+                        
+                        // 남은 금액을 선주문 줄돈에서 차감
+                        if (status.pending_payment_order > 0 && remainingAmount > 0) {
+                            const orderPayment = Math.min(status.pending_payment_order, remainingAmount);
+                            status.pending_payment_order -= orderPayment;
+                        }
+                        
+                        // 음수 방지
+                        if (status.pending_payment_advance < 0) status.pending_payment_advance = 0;
+                        if (status.pending_payment_order < 0) status.pending_payment_order = 0;
+                    }
+                }
+            });
+            
+            // 입고 처리
+            receipts.forEach(receipt => {
+                const status = partnerStatus.get(receipt.partnerId);
+                if (status) {
+                    status.pending_eel_kg -= receipt.quantity;
+                    // 음수 방지
+                    if (status.pending_eel_kg < 0) status.pending_eel_kg = 0;
+                }
+            });
+        }
+
+        // 유틸리티 함수들
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('ko-KR').format(amount) + '원';
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('ko-KR');
+        }
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+        
+        // 입력값 검증 함수
+        function validateNumericInput(value, fieldName, min = 0, max = Number.MAX_SAFE_INTEGER) {
+            const numValue = parseFloat(value);
+            if (isNaN(numValue)) {
+                throw new Error(`${fieldName}은(는) 유효한 숫자여야 합니다.`);
+            }
+            if (numValue < min) {
+                throw new Error(`${fieldName}은(는) ${min} 이상이어야 합니다.`);
+            }
+            if (numValue > max) {
+                throw new Error(`${fieldName}은(는) ${max} 이하여야 합니다.`);
+            }
+            return numValue;
+        }
+        
+        function validateStringInput(value, fieldName, maxLength = 255) {
+            const trimmedValue = value.trim();
+            if (!trimmedValue) {
+                throw new Error(`${fieldName}을(를) 입력해주세요.`);
+            }
+            if (trimmedValue.length > maxLength) {
+                throw new Error(`${fieldName}은(는) ${maxLength}자 이하로 입력해주세요.`);
+            }
+            return trimmedValue;
+        }
+        
+        function validateDateInput(dateValue, fieldName) {
+            if (!dateValue) {
+                throw new Error(`${fieldName}을(를) 선택해주세요.`);
+            }
+            const date = new Date(dateValue);
+            if (isNaN(date.getTime())) {
+                throw new Error(`${fieldName}이(가) 유효하지 않습니다.`);
+            }
+            // 미래 날짜 제한 (필요시)
+            const today = new Date();
+            const maxDate = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate());
+            if (date > maxDate) {
+                throw new Error(`${fieldName}은(는) 1년 이내 날짜여야 합니다.`);
+            }
+            return dateValue;
+        }
+        
+        // 거래처별 단가 저장 (대시보드 전용)
+        function savePartnerPrice(partnerId, price) {
+            const numPrice = parseFloat(price);
+            if (price && !isNaN(numPrice) && numPrice > 0) {
+                localStorage.setItem(`partnerPrice_${partnerId}`, numPrice.toString());
+            } else if (price === '' || price === null || price === undefined) {
+                localStorage.removeItem(`partnerPrice_${partnerId}`);
+            }
+        }
+        
+        // 날짜별 단가 달력 관련 함수들
+        let currentCalendarPartnerId = null;
+        let currentCalendarDate = new Date();
+        let selectedCalendarDate = null;
+        
+        // 달력 토글
+        function togglePriceCalendar(partnerId) {
+            const calendar = document.getElementById(`priceCalendar_${partnerId}`);
+            const isVisible = calendar.style.display === 'block';
+            
+            // 모든 달력 닫기
+            document.querySelectorAll('.price-calendar').forEach(cal => {
+                cal.style.display = 'none';
+            });
+            
+            if (!isVisible) {
+                currentCalendarPartnerId = partnerId;
+                currentCalendarDate = new Date();
+                selectedCalendarDate = new Date();
+                renderPriceCalendar(partnerId);
+                calendar.style.display = 'block';
+                
+                // 클릭 외부 영역 감지를 위한 이벤트 리스너
+                setTimeout(() => {
+                    document.addEventListener('click', closePriceCalendarOnOutsideClick);
+                }, 100);
+            } else {
+                document.removeEventListener('click', closePriceCalendarOnOutsideClick);
+            }
+        }
+        
+        // 외부 클릭 시 달력 닫기
+        function closePriceCalendarOnOutsideClick(event) {
+            if (!event.target.closest('.price-calendar-container')) {
+                document.querySelectorAll('.price-calendar').forEach(cal => {
+                    cal.style.display = 'none';
+                });
+                document.removeEventListener('click', closePriceCalendarOnOutsideClick);
+            }
+        }
+        
+        // 달력 렌더링
+        function renderPriceCalendar(partnerId) {
+            const calendar = document.getElementById(`priceCalendar_${partnerId}`);
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+            
+            const today = new Date();
+            const todayStr = formatDateKey(today);
+            const selectedStr = selectedCalendarDate ? formatDateKey(selectedCalendarDate) : todayStr;
+            
+            let calendarHTML = `
+                <div class="calendar-header">
+                    <button class="calendar-nav-btn" onclick="navigateCalendar('${partnerId}', -1)">◀</button>
+                    <div class="calendar-month-year">${year}년 ${month + 1}월</div>
+                    <button class="calendar-nav-btn" onclick="navigateCalendar('${partnerId}', 1)">▶</button>
+                </div>
+                <div class="calendar-grid">
+                    <div class="calendar-day-header">일</div>
+                    <div class="calendar-day-header">월</div>
+                    <div class="calendar-day-header">화</div>
+                    <div class="calendar-day-header">수</div>
+                    <div class="calendar-day-header">목</div>
+                    <div class="calendar-day-header">금</div>
+                    <div class="calendar-day-header">토</div>
+            `;
+            
+            // 6주 표시
+            for (let week = 0; week < 6; week++) {
+                for (let day = 0; day < 7; day++) {
+                    const currentDate = new Date(startDate);
+                    currentDate.setDate(startDate.getDate() + (week * 7 + day));
+                    
+                    const dateStr = formatDateKey(currentDate);
+                    const dayNum = currentDate.getDate();
+                    const isCurrentMonth = currentDate.getMonth() === month;
+                    const isToday = dateStr === todayStr;
+                    const isSelected = dateStr === selectedStr;
+                    
+                    // 해당 날짜의 저장된 가격 가져오기
+                    const savedPrice = getDayPrice(partnerId, dateStr);
+                    const priceDisplay = savedPrice ? `${parseInt(savedPrice).toLocaleString()}` : '';
+                    
+                    let dayClass = 'calendar-day';
+                    if (!isCurrentMonth) dayClass += ' other-month';
+                    if (isToday) dayClass += ' today';
+                    if (isSelected) dayClass += ' selected';
+                    
+                    calendarHTML += `
+                        <div class="${dayClass}" onclick="selectCalendarDate('${partnerId}', '${dateStr}')">
+                            <div>${dayNum}</div>
+                            ${priceDisplay ? `<div class="day-price">${priceDisplay}</div>` : ''}
+                        </div>
+                    `;
+                }
+            }
+            
+            // 선택된 날짜의 가격 표시 및 입력
+            const selectedPrice = getDayPrice(partnerId, selectedStr) || '';
+            const selectedDateDisplay = selectedCalendarDate ? 
+                `${selectedCalendarDate.getMonth() + 1}/${selectedCalendarDate.getDate()}` : 
+                `${today.getMonth() + 1}/${today.getDate()}`;
+            
+            calendarHTML += `
+                </div>
+                <div class="calendar-footer">
+                    <label style="font-size: 12px; color: #374151; white-space: nowrap;">${selectedDateDisplay} 단가:</label>
+                    <input 
+                        type="number" 
+                        class="calendar-price-input" 
+                        placeholder="원/kg"
+                        value="${selectedPrice}"
+                        id="calendarPriceInput_${partnerId}"
+                    >
+                    <button 
+                        class="calendar-save-btn" 
+                        onclick="saveDayPrice('${partnerId}', '${selectedStr}')"
+                    >
+                        저장
+                    </button>
+                </div>
+            `;
+            
+            calendar.innerHTML = calendarHTML;
+        }
+        
+        // 달력 네비게이션
+        function navigateCalendar(partnerId, direction) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + direction);
+            renderPriceCalendar(partnerId);
+        }
+        
+        // 날짜 선택
+        function selectCalendarDate(partnerId, dateStr) {
+            selectedCalendarDate = parseDateKey(dateStr);
+            renderPriceCalendar(partnerId);
+        }
+        
+        // 날짜별 가격 저장
+        function saveDayPrice(partnerId, dateStr) {
+            const input = document.getElementById(`calendarPriceInput_${partnerId}`);
+            const price = input.value.trim();
+            
+            if (price && !isNaN(parseFloat(price)) && parseFloat(price) > 0) {
+                localStorage.setItem(`dayPrice_${partnerId}_${dateStr}`, price);
+                
+                // 오늘 날짜면 메인 단가 입력 필드도 업데이트
+                const today = formatDateKey(new Date());
+                if (dateStr === today) {
+                    const mainPriceInput = document.querySelector(`input[onchange="savePartnerPrice('${partnerId}', this.value)"]`);
+                    if (mainPriceInput) {
+                        mainPriceInput.value = price;
+                        savePartnerPrice(partnerId, price);
+                    }
+                }
+            } else if (price === '') {
+                localStorage.removeItem(`dayPrice_${partnerId}_${dateStr}`);
+            }
+            
+            renderPriceCalendar(partnerId);
+        }
+        
+        // 날짜별 가격 조회
+        function getDayPrice(partnerId, dateStr) {
+            return localStorage.getItem(`dayPrice_${partnerId}_${dateStr}`);
+        }
+        
+        // 날짜 키 포맷 (YYYY-MM-DD)
+        function formatDateKey(date) {
+            return date.getFullYear() + '-' + 
+                   String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                   String(date.getDate()).padStart(2, '0');
+        }
+        
+        // 날짜 키 파싱
+        function parseDateKey(dateStr) {
+            const parts = dateStr.split('-');
+            return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        }
+
+        // 탭 전환
+        function showTab(tabName, targetElement) {
+            // 모든 탭 컨텐츠 숨기기
+            document.querySelectorAll('.content').forEach(content => {
+                content.classList.add('hide');
+            });
+            
+            // 모든 탭 버튼 비활성화
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 선택된 탭 표시
+            document.getElementById(tabName).classList.remove('hide');
+            
+            // 클릭된 탭 버튼 활성화
+            if (targetElement) {
+                targetElement.classList.add('active');
+            } else {
+                // 탭 이름으로 버튼 찾기 (프로그래밍적 호출용)
+                const tabButtons = document.querySelectorAll('.nav-tab');
+                tabButtons.forEach(button => {
+                    if (button.textContent.includes(getTabDisplayName(tabName))) {
+                        button.classList.add('active');
+                    }
+                });
+            }
+            
+            // 탭별 업데이트
+            if (tabName === 'dashboard') {
+                updateDashboard();
+            } else if (tabName === 'partners') {
+                updatePartnersManageList();
+                updateHistorySelects();
+            } else {
+                updateAllSelects();
+                if (tabName === 'orders') loadOrderHistory();
+                if (tabName === 'advance') loadAdvanceHistory();
+                if (tabName === 'payments') loadPaymentHistory();
+                if (tabName === 'receipts') loadReceiptHistory();
+                if (tabName === 'dataView') initializeDataView();
+            }
+        }
+        
+        // 탭 이름 매핑
+        function getTabDisplayName(tabName) {
+            const tabNames = {
+                'dashboard': '대시보드',
+                'partners': '거래처 관리',
+                'orders': '선주문 관리',
+                'advance': '외상 관리',
+                'payments': '입금 관리',
+                'receipts': '입고 관리',
+                'dataView': '거래내역확인'
+            };
+            return tabNames[tabName] || tabName;
+        }
+
+        // 모든 셀렉트 업데이트
+        function updateAllSelects() {
+            updateOrderSelects();
+            updateAdvanceSelects();
+            updatePaymentSelects();
+            updateReceiptSelects();
+            updateHistorySelects();
+        }
+        
+        // 내역 조회용 셀렉트 업데이트
+        function updateHistorySelects() {
+            // 거래처 관리의 내역 셀렉트
+            const historyPartnerSelect = document.getElementById('historyPartnerSelect');
+            if (historyPartnerSelect) {
+                historyPartnerSelect.innerHTML = '<option value="">거래처를 선택하세요</option>';
+                partners.forEach(partner => {
+                    const option = document.createElement('option');
+                    option.value = partner.id;
+                    option.textContent = partner.name;
+                    historyPartnerSelect.appendChild(option);
+                });
+            }
+            
+            // 선주문 내역 필터
+            const orderHistoryPartner = document.getElementById('orderHistoryPartner');
+            if (orderHistoryPartner) {
+                orderHistoryPartner.innerHTML = '<option value="">전체 거래처</option>';
+                partners.forEach(partner => {
+                    const option = document.createElement('option');
+                    option.value = partner.id;
+                    option.textContent = partner.name;
+                    orderHistoryPartner.appendChild(option);
+                });
+            }
+            
+            // 외상 내역 필터
+            const advanceHistoryPartner = document.getElementById('advanceHistoryPartner');
+            if (advanceHistoryPartner) {
+                advanceHistoryPartner.innerHTML = '<option value="">전체 거래처</option>';
+                partners.forEach(partner => {
+                    const option = document.createElement('option');
+                    option.value = partner.id;
+                    option.textContent = partner.name;
+                    advanceHistoryPartner.appendChild(option);
+                });
+            }
+            
+            // 입금 내역 필터
+            const paymentHistoryPartner = document.getElementById('paymentHistoryPartner');
+            if (paymentHistoryPartner) {
+                paymentHistoryPartner.innerHTML = '<option value="">전체 거래처</option>';
+                partners.forEach(partner => {
+                    const option = document.createElement('option');
+                    option.value = partner.id;
+                    option.textContent = partner.name;
+                    paymentHistoryPartner.appendChild(option);
+                });
+            }
+            
+            // 입고 내역 필터
+            const receiptHistoryPartner = document.getElementById('receiptHistoryPartner');
+            if (receiptHistoryPartner) {
+                receiptHistoryPartner.innerHTML = '<option value="">전체 거래처</option>';
+                partners.forEach(partner => {
+                    const option = document.createElement('option');
+                    option.value = partner.id;
+                    option.textContent = partner.name;
+                    receiptHistoryPartner.appendChild(option);
+                });
+            }
+        }
+
+        // 선주문 셀렉트 업데이트
+        function updateOrderSelects() {
+            const select = document.getElementById('orderPartner');
+            select.innerHTML = '<option value="">거래처를 선택하세요</option>';
+            partners.forEach(partner => {
+                const option = document.createElement('option');
+                option.value = partner.id;
+                option.textContent = partner.name;
+                select.appendChild(option);
+            });
+        }
+
+        // 외상 셀렉트 업데이트
+        function updateAdvanceSelects() {
+            const select = document.getElementById('advancePartner');
+            select.innerHTML = '<option value="">거래처를 선택하세요</option>';
+            partners.forEach(partner => {
+                const option = document.createElement('option');
+                option.value = partner.id;
+                option.textContent = partner.name;
+                select.appendChild(option);
+            });
+        }
+
+        // 입금 셀렉트 업데이트
+        function updatePaymentSelects() {
+            const select = document.getElementById('paymentPartner');
+            select.innerHTML = '<option value="">거래처를 선택하세요</option>';
+            
+            partners.forEach(partner => {
+                const status = partnerStatus.get(partner.id);
+                if (status && (status.pending_payment_order > 0 || status.pending_payment_advance > 0)) {
+                    const option = document.createElement('option');
+                    option.value = partner.id;
+                    const advanceText = status.pending_payment_advance > 0 ? ` (외상: ${formatCurrency(status.pending_payment_advance)})` : '';
+                    option.textContent = partner.name + advanceText;
+                    select.appendChild(option);
+                }
+            });
+        }
+
+        // 입고 셀렉트 업데이트
+        function updateReceiptSelects() {
+            const select = document.getElementById('receiptPartner');
+            select.innerHTML = '<option value="">거래처를 선택하세요</option>';
+            
+            partners.forEach(partner => {
+                const status = partnerStatus.get(partner.id);
+                if (status && status.pending_eel_kg > 0) {
+                    const option = document.createElement('option');
+                    option.value = partner.id;
+                    option.textContent = `${partner.name} - 받을장어: ${status.pending_eel_kg}kg`;
+                    select.appendChild(option);
+                }
+            });
+        }
+
+        // 입금 정보 업데이트
+        function updatePaymentInfo() {
+            const partnerId = document.getElementById('paymentPartner').value;
+            const infoDiv = document.getElementById('paymentInfo');
+            
+            if (!partnerId) {
+                infoDiv.style.display = 'none';
+                document.getElementById('customPaymentAllocation').style.display = 'none';
+                return;
+            }
+            
+            const status = partnerStatus.get(partnerId);
+            if (!status) {
+                infoDiv.style.display = 'none';
+                return;
+            }
+            
+            // 최대 정산 가능 금액 정보 업데이트
+            document.getElementById('maxAdvanceInfo').textContent = `최대: ${formatCurrency(status.pending_payment_advance)}`;
+            document.getElementById('maxOrderInfo').textContent = `최대: ${formatCurrency(status.pending_payment_order)}`;
+            
+            updatePaymentTypeInfo();
+        }
+        
+        // 입금 유형 변경 시 정보 업데이트
+        function updatePaymentTypeInfo() {
+            const partnerId = document.getElementById('paymentPartner').value;
+            const paymentType = document.getElementById('paymentType').value;
+            const infoDiv = document.getElementById('paymentInfo');
+            const customDiv = document.getElementById('customPaymentAllocation');
+            
+            if (!partnerId) {
+                infoDiv.style.display = 'none';
+                customDiv.style.display = 'none';
+                return;
+            }
+            
+            const status = partnerStatus.get(partnerId);
+            if (!status) {
+                infoDiv.style.display = 'none';
+                customDiv.style.display = 'none';
+                return;
+            }
+            
+            // 커스텀 입력 필드 표시/숨김
+            if (paymentType === 'custom') {
+                customDiv.style.display = 'grid';
+            } else {
+                customDiv.style.display = 'none';
+                // 커스텀 입력 필드 초기화
+                document.getElementById('customAdvanceAmount').value = '';
+                document.getElementById('customOrderAmount').value = '';
+            }
+            
+            // 기본 정보 표시
+            let infoText = `
+                <strong>현재 잔액 정보:</strong><br>
+                • 외상 줄돈: ${formatCurrency(status.pending_payment_advance)}<br>
+                • 선주문 줄돈: ${formatCurrency(status.pending_payment_order)}<br>
+                • 총 줄돈: ${formatCurrency(status.pending_payment_advance + status.pending_payment_order)}<br><br>
+            `;
+            
+            // 입금 유형별 안내 메시지
+            switch(paymentType) {
+                case 'auto':
+                    infoText += '<strong>🔄 자동 정산:</strong> 외상을 먼저 정산하고, 남은 금액으로 선주문을 정산합니다.';
+                    break;
+                case 'advance':
+                    infoText += '<strong>💳 외상만 정산:</strong> 입금액 전체를 외상 정산에만 사용합니다.';
+                    break;
+                case 'order':
+                    infoText += '<strong>📦 선주문만 정산:</strong> 입금액 전체를 선주문 정산에만 사용합니다.';
+                    break;
+                case 'custom':
+                    infoText += '<strong>✏️ 직접 지정:</strong> 외상과 선주문 정산액을 직접 입력하세요.';
+                    break;
+            }
+            
+            infoDiv.innerHTML = infoText;
+            infoDiv.style.display = 'block';
+            
+            // 입금액이 입력되어 있으면 정산 내역 계산
+            if (document.getElementById('paymentAmount').value) {
+                calculatePaymentBreakdown();
+            }
+        }
+        
+        // 커스텀 총액 업데이트
+        function updateCustomTotal() {
+            const advanceAmount = parseFloat(document.getElementById('customAdvanceAmount').value) || 0;
+            const orderAmount = parseFloat(document.getElementById('customOrderAmount').value) || 0;
+            const totalAmount = advanceAmount + orderAmount;
+            
+            document.getElementById('paymentAmount').value = totalAmount;
+            calculatePaymentBreakdown();
+        }
+
+        // 입금 정산 내역 계산
+        function calculatePaymentBreakdown() {
+            const partnerId = document.getElementById('paymentPartner').value;
+            const amount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+            const paymentType = document.getElementById('paymentType').value;
+            const infoDiv = document.getElementById('paymentInfo');
+            
+            if (!partnerId || amount <= 0) {
+                updatePaymentTypeInfo();
+                return;
+            }
+            
+            const status = partnerStatus.get(partnerId);
+            if (!status) return;
+            
+            let advancePayment = 0;
+            let orderPayment = 0;
+            let remainingAmount = amount;
+            
+            switch (paymentType) {
+                case 'auto':
+                    // 외상 우선 정산
+                    if (status.pending_payment_advance > 0 && remainingAmount > 0) {
+                        advancePayment = Math.min(status.pending_payment_advance, remainingAmount);
+                        remainingAmount -= advancePayment;
+                    }
+                    // 선주문 정산
+                    if (status.pending_payment_order > 0 && remainingAmount > 0) {
+                        orderPayment = Math.min(status.pending_payment_order, remainingAmount);
+                        remainingAmount -= orderPayment;
+                    }
+                    break;
+                    
+                case 'advance':
+                    // 외상만 정산
+                    if (status.pending_payment_advance > 0) {
+                        advancePayment = Math.min(status.pending_payment_advance, amount);
+                        remainingAmount = amount - advancePayment;
+                    } else {
+                        remainingAmount = amount;
+                    }
+                    break;
+                    
+                case 'order':
+                    // 선주문만 정산
+                    if (status.pending_payment_order > 0) {
+                        orderPayment = Math.min(status.pending_payment_order, amount);
+                        remainingAmount = amount - orderPayment;
+                    } else {
+                        remainingAmount = amount;
+                    }
+                    break;
+                    
+                case 'custom':
+                    // 직접 지정된 금액 사용
+                    const customAdvanceAmount = parseFloat(document.getElementById('customAdvanceAmount').value) || 0;
+                    const customOrderAmount = parseFloat(document.getElementById('customOrderAmount').value) || 0;
+                    
+                    advancePayment = Math.min(customAdvanceAmount, status.pending_payment_advance);
+                    orderPayment = Math.min(customOrderAmount, status.pending_payment_order);
+                    remainingAmount = amount - advancePayment - orderPayment;
+                    break;
+            }
+            
+            // 정산 후 상태 계산
+            const afterAdvance = status.pending_payment_advance - advancePayment;
+            const afterOrder = status.pending_payment_order - orderPayment;
+            
+            let infoText = `
+                <strong>입금 ${formatCurrency(amount)} 정산 내역:</strong><br>
+                • 외상 정산: ${formatCurrency(advancePayment)}<br>
+                • 선주문 정산: ${formatCurrency(orderPayment)}<br>
+                ${remainingAmount > 0 ? `• 초과 입금: ${formatCurrency(remainingAmount)}<br>` : ''}
+                ${remainingAmount < 0 ? `• 부족 금액: ${formatCurrency(Math.abs(remainingAmount))}<br>` : ''}
+                <br>
+                <strong>정산 후 잔액:</strong><br>
+                • 외상 줄돈: ${formatCurrency(afterAdvance)}<br>
+                • 선주문 줄돈: ${formatCurrency(afterOrder)}
+            `;
+            
+            infoDiv.innerHTML = infoText;
+            infoDiv.style.display = 'block';
+        }
+
+        // 대시보드 업데이트
+        function updateDashboard() {
+            calculatePartnerStatus();
+            
+            // 통계 계산
+            let totalOrderDebt = 0;
+            let totalAdvanceDebt = 0;
+            let totalPendingEel = 0;
+            let warningPartners = 0;
+            
+            partnerStatus.forEach((status, partnerId) => {
+                totalOrderDebt += status.pending_payment_order;
+                totalAdvanceDebt += status.pending_payment_advance;
+                totalPendingEel += status.pending_eel_kg;
+                
+                if (status.pending_payment_order > 0 || status.pending_payment_advance > 0 || status.pending_eel_kg > 0) {
+                    warningPartners++;
+                }
+            });
+
+            // 통계 카드 업데이트
+            document.getElementById('statsCards').innerHTML = `
+                <div class="card stats-card red">
+                    <div class="detail-label">선주문 줄돈</div>
+                    <div class="stats-number">${formatCurrency(totalOrderDebt)}</div>
+                </div>
+                <div class="card stats-card orange">
+                    <div class="detail-label">외상 줄돈</div>
+                    <div class="stats-number">${formatCurrency(totalAdvanceDebt)}</div>
+                </div>
+                <div class="card stats-card purple">
+                    <div class="detail-label">받을장어</div>
+                    <div class="stats-number">${totalPendingEel}kg</div>
+                </div>
+                <div class="card stats-card green">
+                    <div class="detail-label">주요거래처</div>
+                    <div class="stats-number">${warningPartners}개</div>
+                </div>
+            `;
+
+            // 전체 거래처 목록 표시
+            updatePartnersList();
+            
+            // 메모 목록 표시
+            updateMemoList();
+        }
+
+        // 메모 목록 업데이트
+        function updateMemoList() {
+            const container = document.getElementById('memoList');
+            const allMemos = [];
+            
+            // 선주문 메모 수집
+            orders.forEach(order => {
+                if (order.memo) {
+                    const partner = partners.find(p => p.id === order.partnerId);
+                    allMemos.push({
+                        id: order.id,
+                        type: '선주문',
+                        date: order.date,
+                        partner: partner ? partner.name : '삭제된 거래처',
+                        memo: order.memo,
+                        color: 'text-blue'
+                    });
+                }
+            });
+            
+            // 외상 메모 수집
+            advances.forEach(advance => {
+                if (advance.memo) {
+                    const partner = partners.find(p => p.id === advance.partnerId);
+                    allMemos.push({
+                        id: advance.id,
+                        type: '외상',
+                        date: advance.date,
+                        partner: partner ? partner.name : '삭제된 거래처',
+                        memo: advance.memo,
+                        color: 'text-orange'
+                    });
+                }
+            });
+            
+            // 입금 메모 수집
+            payments.forEach(payment => {
+                if (payment.memo) {
+                    const partner = partners.find(p => p.id === payment.partnerId);
+                    allMemos.push({
+                        id: payment.id,
+                        type: '입금',
+                        date: payment.date,
+                        partner: partner ? partner.name : '삭제된 거래처',
+                        memo: payment.memo,
+                        color: 'text-green'
+                    });
+                }
+            });
+            
+            // 입고 메모 수집
+            receipts.forEach(receipt => {
+                if (receipt.memo) {
+                    const partner = partners.find(p => p.id === receipt.partnerId);
+                    allMemos.push({
+                        id: receipt.id,
+                        type: '입고',
+                        date: receipt.date,
+                        partner: partner ? partner.name : '삭제된 거래처',
+                        memo: receipt.memo,
+                        color: 'text-purple'
+                    });
+                }
+            });
+            
+            // 날짜순으로 정렬 (최신 10개만)
+            allMemos.sort((a, b) => new Date(b.date) - new Date(a.date));
+            const recentMemos = allMemos.slice(0, 10);
+            
+            if (recentMemos.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray">메모가 없습니다.</div>';
+                return;
+            }
+            
+            container.innerHTML = recentMemos.map((memo, index) => `
+                <div class="card" style="padding: 15px; margin-bottom: 10px; border-left: 4px solid #e5e7eb;" id="memo-${memo.type}-${memo.id || index}">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                        <span class="${memo.color}" style="font-weight: bold; font-size: 0.875rem;">[${memo.type}] ${memo.partner}</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="text-gray" style="font-size: 0.75rem;">${formatDate(memo.date)}</span>
+                            <button class="delete-btn" onclick="deleteMemoFromDashboard('${memo.type}', '${memo.id}', this)" title="메모만 삭제" style="padding: 4px 6px; font-size: 0.75rem;">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.875rem; line-height: 1.4;">${memo.memo}</div>
+                </div>
+            `).join('');
+        }
+        
+        // 대시보드에서 메모 삭제
+        function deleteMemoFromDashboard(type, itemId, buttonElement) {
+            if (!confirm('이 메모를 삭제하시겠습니까?\n\n※ 메모만 삭제되고 거래 내역은 유지됩니다.')) {
+                return;
+            }
+            
+            let found = false;
+            
+            // 해당 거래 내역에서 메모만 삭제
+            switch (type) {
+                case '선주문':
+                    const orderIndex = orders.findIndex(o => o.id === itemId);
+                    if (orderIndex !== -1) {
+                        orders[orderIndex].memo = '';
+                        found = true;
+                    }
+                    break;
+                case '외상':
+                    const advanceIndex = advances.findIndex(a => a.id === itemId);
+                    if (advanceIndex !== -1) {
+                        advances[advanceIndex].memo = '';
+                        found = true;
+                    }
+                    break;
+                case '입금':
+                    const paymentIndex = payments.findIndex(p => p.id === itemId);
+                    if (paymentIndex !== -1) {
+                        payments[paymentIndex].memo = '';
+                        found = true;
+                    }
+                    break;
+                case '입고':
+                    const receiptIndex = receipts.findIndex(r => r.id === itemId);
+                    if (receiptIndex !== -1) {
+                        receipts[receiptIndex].memo = '';
+                        found = true;
+                    }
+                    break;
+            }
+            
+            if (found) {
+                // 데이터 저장
+                saveData();
+                
+                // 메모 카드 애니메이션으로 제거
+                const memoCard = buttonElement.closest('.card');
+                memoCard.style.transition = 'opacity 0.3s, transform 0.3s';
+                memoCard.style.opacity = '0';
+                memoCard.style.transform = 'translateX(100px)';
+                
+                // 애니메이션 후 메모 목록 새로고침
+                setTimeout(() => {
+                    updateMemoList();
+                }, 300);
+                
+                alert('메모가 삭제되었습니다.');
+            } else {
+                alert('해당 메모를 찾을 수 없습니다.');
+            }
+        }
+
+        // 전체 거래처 목록 업데이트
+        function updatePartnersList() {
+            const container = document.getElementById('partnersList');
+            
+            if (partners.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray">등록된 거래처가 없습니다.</div>';
+                return;
+            }
+            
+            container.innerHTML = partners.map(partner => {
+                const status = partnerStatus.get(partner.id) || {
+                    pending_payment_order: 0,
+                    pending_payment_advance: 0,
+                    pending_eel_kg: 0
+                };
+                return createPartnerCard(partner, status, false);
+            }).join('');
+        }
+
+        // 거래처 카드 생성
+        function createPartnerCard(partner, status, isWarning) {
+            const totalDebt = status.pending_payment_order + status.pending_payment_advance;
+            const hasAdvance = status.pending_payment_advance > 0;
+            const cardClass = isWarning ? 'warning' : (totalDebt === 0 && status.pending_eel_kg === 0 ? 'completed' : '');
+            
+            // 거래처별 저장된 단가 불러오기 (오늘 날짜 우선, 없으면 기본 단가)
+            const todayKey = formatDateKey(new Date());
+            const todayPrice = localStorage.getItem(`dayPrice_${partner.id}_${todayKey}`);
+            const savedPrice = todayPrice || localStorage.getItem(`partnerPrice_${partner.id}`) || '';
+            
+            return `
+                <div class="card partner-card ${cardClass}">
+                    <div class="partner-info">
+                        <div>
+                            <div class="partner-name">
+                                ${partner.name}
+                                ${hasAdvance ? `<span class="advance-indicator">외상: ${formatCurrency(status.pending_payment_advance)}</span>` : ''}
+                            </div>
+                            ${partner.contact ? `<div class="text-gray" style="font-size: 0.875rem;">📞 ${partner.contact}</div>` : ''}
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <button class="delete-btn" onclick="deletePartner('${partner.id}', '${partner.name}')" title="거래처 삭제">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 단가 입력 필드 추가 -->
+                    <div style="margin: 15px 0; padding: 10px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <label style="font-size: 0.875rem; font-weight: 600; color: #374151; min-width: 80px;">장어 단가:</label>
+                            <input 
+                                type="number" 
+                                value="${savedPrice}" 
+                                placeholder="원/kg" 
+                                style="flex: 1; padding: 6px 10px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 0.875rem; max-width: 120px;"
+                                onchange="savePartnerPrice('${partner.id}', this.value)"
+                                onblur="savePartnerPrice('${partner.id}', this.value)"
+                            >
+                            <span style="font-size: 0.75rem; color: #6b7280;">원/kg</span>
+                            <div class="price-calendar-container">
+                                <button 
+                                    type="button"
+                                    onclick="togglePriceCalendar('${partner.id}')"
+                                    style="background: #3b82f6; color: white; border: none; padding: 6px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;"
+                                    title="날짜별 단가 보기"
+                                >
+                                    📅
+                                </button>
+                                <div id="priceCalendar_${partner.id}" class="price-calendar">
+                                    <!-- 달력이 여기에 동적으로 생성됩니다 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="partner-details">
+                        <div class="detail-item">
+                            <div class="detail-label">받을장어</div>
+                            <div class="detail-value ${status.pending_eel_kg > 0 ? 'text-purple' : 'text-green'}">${status.pending_eel_kg}kg</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">선주문 줄돈</div>
+                            <div class="detail-value ${status.pending_payment_order > 0 ? 'text-red' : 'text-green'}">${formatCurrency(status.pending_payment_order)}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">외상 줄돈</div>
+                            <div class="detail-value ${status.pending_payment_advance > 0 ? 'text-orange' : 'text-green'}">${formatCurrency(status.pending_payment_advance)}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">총 줄돈</div>
+                            <div class="detail-value ${totalDebt > 0 ? 'text-red' : 'text-green'}">${formatCurrency(totalDebt)}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 거래처 관리 목록 업데이트
+        function updatePartnersManageList() {
+            const container = document.getElementById('partnersListManage');
+            if (partners.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray">등록된 거래처가 없습니다.</div>';
+                return;
+            }
+            
+            container.innerHTML = partners.map(partner => `
+                <div class="card">
+                    <div class="partner-info">
+                        <div>
+                            <div class="partner-name">${partner.name}</div>
+                            <div class="text-gray">${partner.contact || '연락처 없음'}</div>
+                        </div>
+                        <div>
+                            <button class="btn btn-primary" onclick="editPartner('${partner.id}')" style="margin-right: 10px;">수정</button>
+                            <button class="btn btn-danger" onclick="deletePartner('${partner.id}')">삭제</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 거래처 추가
+        function addPartner() {
+            try {
+                const name = validateStringInput(
+                    document.getElementById('partnerName').value, 
+                    '거래처명', 
+                    50
+                );
+                const contact = document.getElementById('partnerContact').value.trim();
+                
+                // 중복 거래처명 검사
+                if (partners.some(p => p.name === name)) {
+                    throw new Error('이미 존재하는 거래처명입니다.');
+                }
+                
+                // 연락처 검증 (선택사항이므로 값이 있을 때만)
+                if (contact && contact.length > 20) {
+                    throw new Error('연락처는 20자 이하로 입력해주세요.');
+                }
+                
+                const partner = {
+                    id: generateId(),
+                    name,
+                    contact
+                };
+                
+                partners.push(partner);
+                
+                // 거래처 상태 초기화
+                partnerStatus.set(partner.id, {
+                    pending_payment_order: 0,
+                    pending_payment_advance: 0,
+                    pending_eel_kg: 0
+                });
+                
+                saveData();
+                updateAllSelects();
+                updatePartnersManageList();
+                updateDashboard();
+                
+                // 현재 탭이 거래처 관리라면 내역도 새로고침
+                const activeTab = document.querySelector('.nav-tab.active');
+                if (activeTab && activeTab.textContent.includes('거래처 관리')) {
+                    loadPartnerHistory();
+                }
+                
+                // 입력 필드 초기화
+                document.getElementById('partnerName').value = '';
+                document.getElementById('partnerContact').value = '';
+                
+                alert('거래처가 등록되었습니다.');
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        // 거래처 수정 모드 활성화
+        function editPartner(id) {
+            const partner = partners.find(p => p.id === id);
+            if (!partner) {
+                alert('거래처를 찾을 수 없습니다.');
+                return;
+            }
+            
+            // 폼에 기존 데이터 입력
+            document.getElementById('partnerName').value = partner.name;
+            document.getElementById('partnerContact').value = partner.contact || '';
+            document.getElementById('partnerEditId').value = id;
+            
+            // 제목과 버튼 변경
+            document.getElementById('partnerFormTitle').textContent = '거래처 수정';
+            document.getElementById('partnerFormButtons').innerHTML = `
+                <button class="btn btn-success" onclick="updatePartner()">수정 완료</button>
+                <button class="btn btn-secondary" onclick="cancelEdit()" style="margin-left: 10px;">취소</button>
+            `;
+            
+            // 상단으로 스크롤
+            document.getElementById('partnerFormTitle').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 거래처 수정 완료
+        function updatePartner() {
+            try {
+                const editId = document.getElementById('partnerEditId').value;
+                const name = validateStringInput(
+                    document.getElementById('partnerName').value, 
+                    '거래처명', 
+                    50
+                );
+                const contact = document.getElementById('partnerContact').value.trim();
+                
+                if (!editId) {
+                    alert('수정할 거래처를 찾을 수 없습니다.');
+                    return;
+                }
+                
+                // 기존 거래처와 이름 중복 체크 (자기 자신 제외)
+                if (partners.some(p => p.id !== editId && p.name === name)) {
+                    throw new Error('이미 등록된 거래처명입니다.');
+                }
+                
+                // 거래처 정보 업데이트
+                const partnerIndex = partners.findIndex(p => p.id === editId);
+                if (partnerIndex === -1) {
+                    alert('거래처를 찾을 수 없습니다.');
+                    return;
+                }
+                
+                partners[partnerIndex].name = name;
+                partners[partnerIndex].contact = contact;
+                
+                saveData();
+                updateAllSelects();
+                updatePartnersManageList();
+                updateDashboard();
+                
+                // 현재 탭이 거래처 관리라면 내역도 새로고침
+                const activeTab = document.querySelector('.nav-tab.active');
+                if (activeTab && activeTab.textContent.includes('거래처 관리')) {
+                    loadPartnerHistory();
+                }
+                
+                // 수정 모드 종료
+                cancelEdit();
+                
+                alert('거래처가 수정되었습니다.');
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        // 수정 모드 취소
+        function cancelEdit() {
+            // 폼 초기화
+            document.getElementById('partnerName').value = '';
+            document.getElementById('partnerContact').value = '';
+            document.getElementById('partnerEditId').value = '';
+            
+            // 제목과 버튼 원래대로
+            document.getElementById('partnerFormTitle').textContent = '거래처 등록';
+            document.getElementById('partnerFormButtons').innerHTML = `
+                <button class="btn btn-success" onclick="addPartner()">거래처 등록</button>
+            `;
+        }
+
+        // 거래처 삭제 (거래 내역은 보존)
+        function deletePartner(id, name) {
+            if (confirm(`${name || '이 거래처'}를 삭제하시겠습니까?\n\n주의: 거래처는 삭제되지만 거래 내역은 보존됩니다.`)) {
+                // 거래처만 삭제, 거래 내역은 보존
+                partners = partners.filter(p => p.id !== id);
+                partnerStatus.delete(id);
+                
+                saveData();
+                updateAllSelects();
+                updatePartnersManageList();
+                updateDashboard();
+                loadPartnerHistory();
+            }
+        }
+
+        // 선주문 추가
+        function addOrder() {
+            try {
+                const partnerId = document.getElementById('orderPartner').value;
+                if (!partnerId) {
+                    throw new Error('거래처를 선택해주세요.');
+                }
+                
+                const date = validateDateInput(
+                    document.getElementById('orderDate').value, 
+                    '주문일'
+                );
+                
+                const quantity = validateNumericInput(
+                    document.getElementById('orderQuantity').value, 
+                    '수량', 
+                    0.1, 
+                    99999
+                );
+                
+                const pricePerKg = validateNumericInput(
+                    document.getElementById('orderPrice').value, 
+                    '단가', 
+                    1, 
+                    999999
+                );
+                
+                const memo = document.getElementById('orderMemo').value.trim();
+                if (memo.length > 500) {
+                    throw new Error('비고는 500자 이하로 입력해주세요.');
+                }
+                
+                const totalAmount = quantity * pricePerKg;
+                
+                const order = {
+                    id: generateId(),
+                    partnerId,
+                    date,
+                    quantity,
+                    pricePerKg,
+                    totalAmount,
+                    memo
+                };
+                
+                orders.push(order);
+                
+                // 거래처 상태 업데이트
+                const status = partnerStatus.get(partnerId);
+                if (status) {
+                    status.pending_payment_order += totalAmount;
+                    status.pending_eel_kg += quantity;
+                }
+                
+                saveData();
+                updateAllSelects();
+                updateDashboard();
+                loadOrderHistory();
+                
+                // 입력 필드 초기화
+                document.getElementById('orderPartner').value = '';
+                document.getElementById('orderQuantity').value = '';
+                document.getElementById('orderPrice').value = '';
+                document.getElementById('orderMemo').value = '';
+                document.getElementById('orderTotalAmount').textContent = '';
+                
+                alert('선주문이 등록되었습니다.');
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        // 외상 추가
+        function addAdvance() {
+            try {
+                const partnerId = document.getElementById('advancePartner').value;
+                if (!partnerId) {
+                    throw new Error('거래처를 선택해주세요.');
+                }
+                
+                const date = validateDateInput(
+                    document.getElementById('advanceDate').value, 
+                    '외상일'
+                );
+                
+                const quantity = validateNumericInput(
+                    document.getElementById('advanceQuantity').value, 
+                    '수량', 
+                    0.1, 
+                    99999
+                );
+                
+                const pricePerKg = validateNumericInput(
+                    document.getElementById('advancePrice').value, 
+                    '단가', 
+                    1, 
+                    999999
+                );
+                
+                const memo = document.getElementById('advanceMemo').value.trim();
+                if (memo.length > 500) {
+                    throw new Error('비고는 500자 이하로 입력해주세요.');
+                }
+                
+                const totalAmount = quantity * pricePerKg;
+                
+                const advance = {
+                    id: generateId(),
+                    partnerId,
+                    date,
+                    quantity,
+                    pricePerKg,
+                    totalAmount,
+                    memo
+                };
+                
+                advances.push(advance);
+                
+                // 거래처 상태 업데이트
+                const status = partnerStatus.get(partnerId);
+                if (status) {
+                    status.pending_payment_advance += totalAmount;
+                    status.pending_eel_kg += quantity;
+                }
+                
+                saveData();
+                updateAllSelects();
+                updateDashboard();
+                loadAdvanceHistory();
+                
+                // 입력 필드 초기화
+                document.getElementById('advancePartner').value = '';
+                document.getElementById('advanceQuantity').value = '';
+                document.getElementById('advancePrice').value = '';
+                document.getElementById('advanceMemo').value = '';
+                document.getElementById('advanceTotalAmount').textContent = '';
+                
+                alert('외상이 등록되었습니다.');
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        // 입금 추가
+        function addPayment() {
+            try {
+                const partnerId = document.getElementById('paymentPartner').value;
+                if (!partnerId) {
+                    throw new Error('거래처를 선택해주세요.');
+                }
+                
+                const date = validateDateInput(
+                    document.getElementById('paymentDate').value, 
+                    '입금일'
+                );
+                
+                const amount = validateNumericInput(
+                    document.getElementById('paymentAmount').value, 
+                    '입금액', 
+                    1, 
+                    99999999
+                );
+                
+                const paymentType = document.getElementById('paymentType').value;
+                const memo = document.getElementById('paymentMemo').value.trim();
+                if (memo.length > 500) {
+                    throw new Error('비고는 500자 이하로 입력해주세요.');
+                }
+                
+                const status = partnerStatus.get(partnerId);
+                if (!status) {
+                    throw new Error('거래처 정보를 찾을 수 없습니다.');
+                }
+            
+            // 입금 유형별 정산 금액 계산
+            let advancePayment = 0;
+            let orderPayment = 0;
+            let remainingAmount = amount;
+            
+            switch (paymentType) {
+                case 'auto':
+                    // 외상 우선 정산
+                    if (status.pending_payment_advance > 0 && remainingAmount > 0) {
+                        advancePayment = Math.min(status.pending_payment_advance, remainingAmount);
+                        remainingAmount -= advancePayment;
+                    }
+                    // 선주문 정산
+                    if (status.pending_payment_order > 0 && remainingAmount > 0) {
+                        orderPayment = Math.min(status.pending_payment_order, remainingAmount);
+                        remainingAmount -= orderPayment;
+                    }
+                    break;
+                    
+                case 'advance':
+                    // 외상만 정산
+                    if (status.pending_payment_advance > 0) {
+                        advancePayment = Math.min(status.pending_payment_advance, amount);
+                        remainingAmount = amount - advancePayment;
+                    }
+                    break;
+                    
+                case 'order':
+                    // 선주문만 정산
+                    if (status.pending_payment_order > 0) {
+                        orderPayment = Math.min(status.pending_payment_order, amount);
+                        remainingAmount = amount - orderPayment;
+                    }
+                    break;
+                    
+                case 'custom':
+                    // 직접 지정된 금액 사용
+                    const customAdvanceAmount = parseFloat(document.getElementById('customAdvanceAmount').value) || 0;
+                    const customOrderAmount = parseFloat(document.getElementById('customOrderAmount').value) || 0;
+                    
+                            if (customAdvanceAmount + customOrderAmount !== amount) {
+                        throw new Error('외상 정산액 + 선주문 정산액이 입금액과 일치하지 않습니다.');
+                    }
+                    
+                    if (customAdvanceAmount > status.pending_payment_advance) {
+                        throw new Error('외상 정산액이 실제 외상 금액보다 큽니다.');
+                    }
+                    
+                    if (customOrderAmount > status.pending_payment_order) {
+                        throw new Error('선주문 정산액이 실제 선주문 금액보다 큽니다.');
+                    }
+                    
+                    advancePayment = customAdvanceAmount;
+                    orderPayment = customOrderAmount;
+                    remainingAmount = 0;
+                    break;
+            }
+            
+            // 입금 내역 저장 (정산 상세 정보 포함)
+            const payment = {
+                id: generateId(),
+                partnerId,
+                date,
+                amount,
+                paymentType,
+                advancePayment,
+                orderPayment,
+                remainingAmount,
+                memo
+            };
+            
+            payments.push(payment);
+            
+            // 거래처 상태 업데이트
+            status.pending_payment_advance -= advancePayment;
+            status.pending_payment_order -= orderPayment;
+            
+            saveData();
+            updateAllSelects();
+            updateDashboard();
+            loadPaymentHistory();
+            
+            // 입력 필드 초기화
+            document.getElementById('paymentPartner').value = '';
+            document.getElementById('paymentAmount').value = '';
+            document.getElementById('paymentMemo').value = '';
+            document.getElementById('paymentType').value = 'auto';
+            document.getElementById('customAdvanceAmount').value = '';
+            document.getElementById('customOrderAmount').value = '';
+            document.getElementById('paymentInfo').style.display = 'none';
+            document.getElementById('customPaymentAllocation').style.display = 'none';
+            
+            let alertMessage = '입금이 등록되었습니다.\n\n';
+            alertMessage += `외상 정산: ${formatCurrency(advancePayment)}\n`;
+            alertMessage += `선주문 정산: ${formatCurrency(orderPayment)}`;
+            if (remainingAmount > 0) {
+                alertMessage += `\n초과 입금: ${formatCurrency(remainingAmount)}`;
+            }
+            
+                alert(alertMessage);
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        // 입고 추가
+        function addReceipt() {
+            try {
+                const partnerId = document.getElementById('receiptPartner').value;
+                if (!partnerId) {
+                    throw new Error('거래처를 선택해주세요.');
+                }
+                
+                const date = validateDateInput(
+                    document.getElementById('receiptDate').value, 
+                    '입고일'
+                );
+                
+                const quantity = validateNumericInput(
+                    document.getElementById('receiptQuantity').value, 
+                    '입고량', 
+                    0.1, 
+                    99999
+                );
+                
+                const memo = document.getElementById('receiptMemo').value.trim();
+                if (memo.length > 500) {
+                    throw new Error('비고는 500자 이하로 입력해주세요.');
+                }
+                
+                const receipt = {
+                    id: generateId(),
+                    partnerId,
+                    date,
+                    quantity,
+                    memo
+                };
+                
+                receipts.push(receipt);
+                
+                // 거래처 상태 업데이트
+                const status = partnerStatus.get(partnerId);
+                if (status) {
+                    status.pending_eel_kg -= quantity;
+                    // 음수 방지
+                    if (status.pending_eel_kg < 0) status.pending_eel_kg = 0;
+                }
+                
+                saveData();
+                updateAllSelects();
+                updateDashboard();
+                loadReceiptHistory();
+                
+                // 입력 필드 초기화
+                document.getElementById('receiptPartner').value = '';
+                document.getElementById('receiptQuantity').value = '';
+                document.getElementById('receiptMemo').value = '';
+                
+                alert('입고가 등록되었습니다.');
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        // 입금 내역 로드
+        function loadPaymentHistory() {
+            const partnerFilter = document.getElementById('paymentHistoryPartner').value;
+            const periodFilter = document.getElementById('paymentHistoryPeriod').value;
+            const container = document.getElementById('paymentHistoryList');
+            
+            let filteredPayments = payments;
+            
+            // 거래처 필터 적용
+            if (partnerFilter) {
+                filteredPayments = filteredPayments.filter(payment => payment.partnerId === partnerFilter);
+            }
+            
+            // 기간 필터 적용
+            if (periodFilter !== 'all') {
+                const days = parseInt(periodFilter);
+                const cutoffDate = new Date();
+                cutoffDate.setDate(cutoffDate.getDate() - days);
+                filteredPayments = filteredPayments.filter(payment => new Date(payment.date) >= cutoffDate);
+            }
+            
+            // 날짜순 정렬 (최신순)
+            filteredPayments.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            if (filteredPayments.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray">입금 내역이 없습니다.</div>';
+                return;
+            }
+            
+            container.innerHTML = filteredPayments.map(payment => {
+                const partner = partners.find(p => p.id === payment.partnerId);
+                const partnerName = partner ? partner.name : '삭제된 거래처';
+                
+                // 입금 유형 표시
+                let paymentTypeText = '';
+                switch(payment.paymentType) {
+                    case 'auto': paymentTypeText = '🔄 자동정산'; break;
+                    case 'advance': paymentTypeText = '💳 외상정산'; break;
+                    case 'order': paymentTypeText = '📦 선주문정산'; break;
+                    case 'custom': paymentTypeText = '✏️ 직접지정'; break;
+                    default: paymentTypeText = '🔄 자동정산'; break;
+                }
+                
+                // 정산 상세 정보 (신규 입금 내역에만 있음)
+                let settlementInfo = '';
+                if (payment.advancePayment !== undefined && payment.orderPayment !== undefined) {
+                    settlementInfo = `
+                        <div class="payment-breakdown" style="margin-top: 10px;">
+                            <strong>정산 상세:</strong><br>
+                            • 외상 정산: ${formatCurrency(payment.advancePayment || 0)}<br>
+                            • 선주문 정산: ${formatCurrency(payment.orderPayment || 0)}
+                            ${payment.remainingAmount > 0 ? `<br>• 초과 입금: ${formatCurrency(payment.remainingAmount)}` : ''}
+                        </div>
+                    `;
+                }
+                
+                return `
+                    <div class="card" style="margin-bottom: 15px; border-left: 4px solid #10b981;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                            <div>
+                                <div style="font-weight: bold; color: #1f2937; margin-bottom: 5px;">
+                                    ${partnerName} 
+                                    <span style="background: #dcfce7; color: #166534; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; margin-left: 5px;">
+                                        ${paymentTypeText}
+                                    </span>
+                                </div>
+                                <div class="text-gray" style="font-size: 0.875rem;">${formatDate(payment.date)}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 1.2rem; font-weight: bold; color: #10b981;">
+                                    ${formatCurrency(payment.amount)}
+                                </div>
+                                <button class="delete-btn" onclick="deletePayment('${payment.id}')" title="입금 내역 삭제">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                        ${settlementInfo}
+                        ${payment.memo ? `<div style="margin-top: 10px; padding: 8px; background: #f9fafb; border-radius: 4px; font-size: 0.875rem;">${payment.memo}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // 선주문 내역 로드 
+        function loadOrderHistory() {
+            const partnerFilter = document.getElementById('orderHistoryPartner').value;
+            const periodFilter = document.getElementById('orderHistoryPeriod').value;
+            const container = document.getElementById('orderHistoryList');
+            
+            let filteredOrders = orders;
+            
+            // 거래처 필터 적용
+            if (partnerFilter) {
+                filteredOrders = filteredOrders.filter(order => order.partnerId === partnerFilter);
+            }
+            
+            // 기간 필터 적용
+            if (periodFilter !== 'all') {
+                const days = parseInt(periodFilter);
+                const cutoffDate = new Date();
+                cutoffDate.setDate(cutoffDate.getDate() - days);
+                filteredOrders = filteredOrders.filter(order => new Date(order.date) >= cutoffDate);
+            }
+            
+            // 날짜순 정렬 (최신순)
+            filteredOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            if (filteredOrders.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray">선주문 내역이 없습니다.</div>';
+                return;
+            }
+            
+            container.innerHTML = filteredOrders.map(order => {
+                const partner = partners.find(p => p.id === order.partnerId);
+                const partnerName = partner ? partner.name : '삭제된 거래처';
+                
+                return `
+                    <div class="card" style="margin-bottom: 15px; border-left: 4px solid #3b82f6;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                            <div>
+                                <div style="font-weight: bold; color: #1f2937; margin-bottom: 5px;">${partnerName}</div>
+                                <div class="text-gray" style="font-size: 0.875rem;">${formatDate(order.date)}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 1.2rem; font-weight: bold; color: #3b82f6;">
+                                    ${formatCurrency(order.totalAmount)}
+                                </div>
+                                <button class="delete-btn" onclick="deleteOrder('${order.id}')" title="선주문 삭제">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px;">
+                            <div style="text-align: center; padding: 8px; background: #f3f4f6; border-radius: 4px;">
+                                <div class="text-gray" style="font-size: 0.75rem;">수량</div>
+                                <div style="font-weight: bold;">${order.quantity}kg</div>
+                            </div>
+                            <div style="text-align: center; padding: 8px; background: #f3f4f6; border-radius: 4px;">
+                                <div class="text-gray" style="font-size: 0.75rem;">단가</div>
+                                <div style="font-weight: bold;">${formatCurrency(order.pricePerKg)}/kg</div>
+                            </div>
+                        </div>
+                        ${order.memo ? `<div style="padding: 8px; background: #f9fafb; border-radius: 4px; font-size: 0.875rem;">${order.memo}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // 외상 내역 로드
+        function loadAdvanceHistory() {
+            const partnerFilter = document.getElementById('advanceHistoryPartner').value;
+            const periodFilter = document.getElementById('advanceHistoryPeriod').value;
+            const container = document.getElementById('advanceHistoryList');
+            
+            let filteredAdvances = advances;
+            
+            // 거래처 필터 적용
+            if (partnerFilter) {
+                filteredAdvances = filteredAdvances.filter(advance => advance.partnerId === partnerFilter);
+            }
+            
+            // 기간 필터 적용
+            if (periodFilter !== 'all') {
+                const days = parseInt(periodFilter);
+                const cutoffDate = new Date();
+                cutoffDate.setDate(cutoffDate.getDate() - days);
+                filteredAdvances = filteredAdvances.filter(advance => new Date(advance.date) >= cutoffDate);
+            }
+            
+            // 날짜순 정렬 (최신순)
+            filteredAdvances.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            if (filteredAdvances.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray">외상 내역이 없습니다.</div>';
+                return;
+            }
+            
+            container.innerHTML = filteredAdvances.map(advance => {
+                const partner = partners.find(p => p.id === advance.partnerId);
+                const partnerName = partner ? partner.name : '삭제된 거래처';
+                
+                return `
+                    <div class="card" style="margin-bottom: 15px; border-left: 4px solid #f59e0b;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                            <div>
+                                <div style="font-weight: bold; color: #1f2937; margin-bottom: 5px;">${partnerName}</div>
+                                <div class="text-gray" style="font-size: 0.875rem;">${formatDate(advance.date)}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 1.2rem; font-weight: bold; color: #f59e0b;">
+                                    ${formatCurrency(advance.totalAmount)}
+                                </div>
+                                <button class="delete-btn" onclick="deleteAdvance('${advance.id}')" title="외상 삭제">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px;">
+                            <div style="text-align: center; padding: 8px; background: #f3f4f6; border-radius: 4px;">
+                                <div class="text-gray" style="font-size: 0.75rem;">수량</div>
+                                <div style="font-weight: bold;">${advance.quantity}kg</div>
+                            </div>
+                            <div style="text-align: center; padding: 8px; background: #f3f4f6; border-radius: 4px;">
+                                <div class="text-gray" style="font-size: 0.75rem;">단가</div>
+                                <div style="font-weight: bold;">${formatCurrency(advance.pricePerKg)}/kg</div>
+                            </div>
+                        </div>
+                        ${advance.memo ? `<div style="padding: 8px; background: #f9fafb; border-radius: 4px; font-size: 0.875rem;">${advance.memo}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // 입고 내역 로드
+        function loadReceiptHistory() {
+            const partnerFilter = document.getElementById('receiptHistoryPartner').value;
+            const periodFilter = document.getElementById('receiptHistoryPeriod').value;
+            const container = document.getElementById('receiptHistoryList');
+            
+            let filteredReceipts = receipts;
+            
+            // 거래처 필터 적용
+            if (partnerFilter) {
+                filteredReceipts = filteredReceipts.filter(receipt => receipt.partnerId === partnerFilter);
+            }
+            
+            // 기간 필터 적용
+            if (periodFilter !== 'all') {
+                const days = parseInt(periodFilter);
+                const cutoffDate = new Date();
+                cutoffDate.setDate(cutoffDate.getDate() - days);
+                filteredReceipts = filteredReceipts.filter(receipt => new Date(receipt.date) >= cutoffDate);
+            }
+            
+            // 날짜순 정렬 (최신순)
+            filteredReceipts.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            if (filteredReceipts.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray">입고 내역이 없습니다.</div>';
+                return;
+            }
+            
+            container.innerHTML = filteredReceipts.map(receipt => {
+                const partner = partners.find(p => p.id === receipt.partnerId);
+                const partnerName = partner ? partner.name : '삭제된 거래처';
+                
+                return `
+                    <div class="card" style="margin-bottom: 15px; border-left: 4px solid #8b5cf6;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                            <div>
+                                <div style="font-weight: bold; color: #1f2937; margin-bottom: 5px;">${partnerName}</div>
+                                <div class="text-gray" style="font-size: 0.875rem;">${formatDate(receipt.date)}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 1.2rem; font-weight: bold; color: #8b5cf6;">
+                                    ${receipt.quantity}kg
+                                </div>
+                                <button class="delete-btn" onclick="deleteReceipt('${receipt.id}')" title="입고 삭제">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                        ${receipt.memo ? `<div style="padding: 8px; background: #f9fafb; border-radius: 4px; font-size: 0.875rem;">${receipt.memo}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // 거래처별 전체 내역 로드
+        function loadPartnerHistory() {
+            const partnerId = document.getElementById('historyPartnerSelect').value;
+            const periodFilter = document.getElementById('historyPeriodFilter').value;
+            const container = document.getElementById('partnerHistoryList');
+            
+            if (!partnerId) {
+                container.innerHTML = '<div class="no-history">거래처를 선택하면 전체 거래 내역이 표시됩니다.</div>';
+                return;
+            }
+            
+            const partner = partners.find(p => p.id === partnerId);
+            if (!partner) {
+                container.innerHTML = '<div class="text-center text-gray">선택한 거래처를 찾을 수 없습니다.</div>';
+                return;
+            }
+            
+            // 모든 거래 내역 수집
+            const allTransactions = [];
+            
+            // 선주문 추가
+            orders.filter(o => o.partnerId === partnerId).forEach(order => {
+                allTransactions.push({
+                    type: 'order',
+                    date: order.date,
+                    data: order,
+                    sortDate: new Date(order.date)
+                });
+            });
+            
+            // 외상 추가
+            advances.filter(a => a.partnerId === partnerId).forEach(advance => {
+                allTransactions.push({
+                    type: 'advance',
+                    date: advance.date,
+                    data: advance,
+                    sortDate: new Date(advance.date)
+                });
+            });
+            
+            // 입금 추가
+            payments.filter(p => p.partnerId === partnerId).forEach(payment => {
+                allTransactions.push({
+                    type: 'payment',
+                    date: payment.date,
+                    data: payment,
+                    sortDate: new Date(payment.date)
+                });
+            });
+            
+            // 입고 추가
+            receipts.filter(r => r.partnerId === partnerId).forEach(receipt => {
+                allTransactions.push({
+                    type: 'receipt',
+                    date: receipt.date,
+                    data: receipt,
+                    sortDate: new Date(receipt.date)
+                });
+            });
+            
+            // 기간 필터 적용
+            let filteredTransactions = allTransactions;
+            if (periodFilter !== 'all') {
+                const days = parseInt(periodFilter);
+                const cutoffDate = new Date();
+                cutoffDate.setDate(cutoffDate.getDate() - days);
+                filteredTransactions = allTransactions.filter(transaction => transaction.sortDate >= cutoffDate);
+            }
+            
+            // 날짜순 정렬 (최신순)
+            filteredTransactions.sort((a, b) => b.sortDate - a.sortDate);
+            
+            if (filteredTransactions.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray">해당 기간에 거래 내역이 없습니다.</div>';
+                return;
+            }
+            
+            container.innerHTML = filteredTransactions.map(transaction => {
+                const data = transaction.data;
+                
+                switch (transaction.type) {
+                    case 'order':
+                        return `
+                            <div class="card" style="margin-bottom: 15px; border-left: 4px solid #3b82f6;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                    <span style="background: #dbeafe; color: #1d4ed8; padding: 4px 8px; border-radius: 4px; font-size: 0.875rem; font-weight: bold;">📦 선주문</span>
+                                    <span class="text-gray" style="font-size: 0.875rem;">${formatDate(data.date)}</span>
+                                </div>
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px;">
+                                    <div style="text-align: center; padding: 8px; background: #f3f4f6; border-radius: 4px;">
+                                        <div class="text-gray" style="font-size: 0.75rem;">수량</div>
+                                        <div style="font-weight: bold;">${data.quantity}kg</div>
+                                    </div>
+                                    <div style="text-align: center; padding: 8px; background: #f3f4f6; border-radius: 4px;">
+                                        <div class="text-gray" style="font-size: 0.75rem;">단가</div>
+                                        <div style="font-weight: bold;">${formatCurrency(data.pricePerKg)}/kg</div>
+                                    </div>
+                                    <div style="text-align: center; padding: 8px; background: #f3f4f6; border-radius: 4px;">
+                                        <div class="text-gray" style="font-size: 0.75rem;">총액</div>
+                                        <div style="font-weight: bold; color: #3b82f6;">${formatCurrency(data.totalAmount)}</div>
+                                    </div>
+                                </div>
+                                ${data.memo ? `<div style="padding: 8px; background: #f9fafb; border-radius: 4px; font-size: 0.875rem;">${data.memo}</div>` : ''}
+                            </div>
+                        `;
+                    case 'advance':
+                        return `
+                            <div class="card" style="margin-bottom: 15px; border-left: 4px solid #f59e0b;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                    <span style="background: #fef3c7; color: #d97706; padding: 4px 8px; border-radius: 4px; font-size: 0.875rem; font-weight: bold;">💳 외상</span>
+                                    <span class="text-gray" style="font-size: 0.875rem;">${formatDate(data.date)}</span>
+                                </div>
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px;">
+                                    <div style="text-align: center; padding: 8px; background: #f3f4f6; border-radius: 4px;">
+                                        <div class="text-gray" style="font-size: 0.75rem;">수량</div>
+                                        <div style="font-weight: bold;">${data.quantity}kg</div>
+                                    </div>
+                                    <div style="text-align: center; padding: 8px; background: #f3f4f6; border-radius: 4px;">
+                                        <div class="text-gray" style="font-size: 0.75rem;">단가</div>
+                                        <div style="font-weight: bold;">${formatCurrency(data.pricePerKg)}/kg</div>
+                                    </div>
+                                    <div style="text-align: center; padding: 8px; background: #f3f4f6; border-radius: 4px;">
+                                        <div class="text-gray" style="font-size: 0.75rem;">총액</div>
+                                        <div style="font-weight: bold; color: #f59e0b;">${formatCurrency(data.totalAmount)}</div>
+                                    </div>
+                                </div>
+                                ${data.memo ? `<div style="padding: 8px; background: #f9fafb; border-radius: 4px; font-size: 0.875rem;">${data.memo}</div>` : ''}
+                            </div>
+                        `;
+                    case 'payment':
+                        let paymentTypeText = '';
+                        switch(data.paymentType) {
+                            case 'auto': paymentTypeText = '🔄 자동정산'; break;
+                            case 'advance': paymentTypeText = '💳 외상정산'; break;
+                            case 'order': paymentTypeText = '📦 선주문정산'; break;
+                            case 'custom': paymentTypeText = '✏️ 직접지정'; break;
+                            default: paymentTypeText = '🔄 자동정산'; break;
+                        }
+                        
+                        let settlementInfo = '';
+                        if (data.advancePayment !== undefined && data.orderPayment !== undefined) {
+                            settlementInfo = `
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px;">
+                                    <div style="text-align: center; padding: 8px; background: #f3f4f6; border-radius: 4px;">
+                                        <div class="text-gray" style="font-size: 0.75rem;">외상 정산</div>
+                                        <div style="font-weight: bold;">${formatCurrency(data.advancePayment)}</div>
+                                    </div>
+                                    <div style="text-align: center; padding: 8px; background: #f3f4f6; border-radius: 4px;">
+                                        <div class="text-gray" style="font-size: 0.75rem;">선주문 정산</div>
+                                        <div style="font-weight: bold;">${formatCurrency(data.orderPayment)}</div>
+                                    </div>
+                                    <div style="text-align: center; padding: 8px; background: #f3f4f6; border-radius: 4px;">
+                                        <div class="text-gray" style="font-size: 0.75rem;">총 입금액</div>
+                                        <div style="font-weight: bold; color: #10b981;">${formatCurrency(data.amount)}</div>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            settlementInfo = `
+                                <div style="text-align: center; padding: 8px; background: #f3f4f6; border-radius: 4px; margin-bottom: 10px;">
+                                    <div class="text-gray" style="font-size: 0.75rem;">입금액</div>
+                                    <div style="font-weight: bold; color: #10b981;">${formatCurrency(data.amount)}</div>
+                                </div>
+                            `;
+                        }
+                        
+                        return `
+                            <div class="card" style="margin-bottom: 15px; border-left: 4px solid #10b981;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                    <span style="background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 4px; font-size: 0.875rem; font-weight: bold;">💰 입금 (${paymentTypeText})</span>
+                                    <span class="text-gray" style="font-size: 0.875rem;">${formatDate(data.date)}</span>
+                                </div>
+                                ${settlementInfo}
+                                ${data.memo ? `<div style="padding: 8px; background: #f9fafb; border-radius: 4px; font-size: 0.875rem;">${data.memo}</div>` : ''}
+                            </div>
+                        `;
+                    case 'receipt':
+                        return `
+                            <div class="card" style="margin-bottom: 15px; border-left: 4px solid #8b5cf6;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                    <span style="background: #ede9fe; color: #7c3aed; padding: 4px 8px; border-radius: 4px; font-size: 0.875rem; font-weight: bold;">📥 입고</span>
+                                    <span class="text-gray" style="font-size: 0.875rem;">${formatDate(data.date)}</span>
+                                </div>
+                                <div style="text-align: center; padding: 8px; background: #f3f4f6; border-radius: 4px; margin-bottom: 10px;">
+                                    <div class="text-gray" style="font-size: 0.75rem;">입고량</div>
+                                    <div style="font-weight: bold; color: #8b5cf6;">${data.quantity}kg</div>
+                                </div>
+                                ${data.memo ? `<div style="padding: 8px; background: #f9fafb; border-radius: 4px; font-size: 0.875rem;">${data.memo}</div>` : ''}
+                            </div>
+                        `;
+                }
+            }).join('');
+        }
+        
+        // 내역 삭제 함수들도 추가 (필요시)
+        function deletePayment(paymentId) {
+            if (confirm('이 입금 내역을 삭제하시겠습니까?\n\n※ 삭제하면 정산 내역도 취소됩니다.')) {
+                payments = payments.filter(p => p.id !== paymentId);
+                calculatePartnerStatus();
+                saveData();
+                updateDashboard();
+                loadPaymentHistory();
+                alert('입금 내역이 삭제되었습니다.');
+            }
+        }
+        
+        function deleteOrder(orderId) {
+            if (confirm('이 선주문을 삭제하시겠습니까?')) {
+                orders = orders.filter(o => o.id !== orderId);
+                calculatePartnerStatus();
+                saveData();
+                updateDashboard();
+                loadOrderHistory();
+                alert('선주문이 삭제되었습니다.');
+            }
+        }
+        
+        function deleteAdvance(advanceId) {
+            if (confirm('이 외상을 삭제하시겠습니까?')) {
+                advances = advances.filter(a => a.id !== advanceId);
+                calculatePartnerStatus();
+                saveData();
+                updateDashboard();
+                loadAdvanceHistory();
+                alert('외상이 삭제되었습니다.');
+            }
+        }
+        
+        function deleteReceipt(receiptId) {
+            if (confirm('이 입고 내역을 삭제하시겠습니까?')) {
+                receipts = receipts.filter(r => r.id !== receiptId);
+                calculatePartnerStatus();
+                saveData();
+                updateDashboard();
+                loadReceiptHistory();
+                alert('입고 내역이 삭제되었습니다.');
+            }
+        }
+
+        // 거래내역확인 초기화
+        function initializeDataView() {
+            updateDataViewSelects();
+            filterData();
+        }
+
+        // 거래내역확인 셀렉트 업데이트
+        function updateDataViewSelects() {
+            const partnerSelect = document.getElementById('dataPartnerFilter');
+            partnerSelect.innerHTML = '<option value="">전체 거래처</option>';
+            
+            partners.forEach(partner => {
+                const option = document.createElement('option');
+                option.value = partner.id;
+                option.textContent = partner.name;
+                partnerSelect.appendChild(option);
+            });
+        }
+
+        // 데이터 필터링
+        function filterData() {
+            const dataType = document.getElementById('dataTypeFilter').value;
+            const partnerId = document.getElementById('dataPartnerFilter').value;
+            const startDate = document.getElementById('dataStartDate').value;
+            const endDate = document.getElementById('dataEndDate').value;
+
+            let filteredData = [];
+
+            // 데이터 유형별로 필터링
+            if (dataType === 'all' || dataType === 'partners') {
+                let partnerData = partners.filter(p => !partnerId || p.id === partnerId);
+                filteredData.push({
+                    type: 'partners',
+                    title: '거래처 정보',
+                    data: partnerData
+                });
+            }
+
+            if (dataType === 'all' || dataType === 'orders') {
+                let orderData = orders.filter(order => {
+                    const matchPartner = !partnerId || order.partnerId === partnerId;
+                    const matchDate = (!startDate || order.date >= startDate) && 
+                                    (!endDate || order.date <= endDate);
+                    return matchPartner && matchDate;
+                });
+                filteredData.push({
+                    type: 'orders',
+                    title: '선주문 내역',
+                    data: orderData
+                });
+            }
+
+            if (dataType === 'all' || dataType === 'advances') {
+                let advanceData = advances.filter(advance => {
+                    const matchPartner = !partnerId || advance.partnerId === partnerId;
+                    const matchDate = (!startDate || advance.date >= startDate) && 
+                                    (!endDate || advance.date <= endDate);
+                    return matchPartner && matchDate;
+                });
+                filteredData.push({
+                    type: 'advances',
+                    title: '외상 내역',
+                    data: advanceData
+                });
+            }
+
+            if (dataType === 'all' || dataType === 'payments') {
+                let paymentData = payments.filter(payment => {
+                    const matchPartner = !partnerId || payment.partnerId === partnerId;
+                    const matchDate = (!startDate || payment.date >= startDate) && 
+                                    (!endDate || payment.date <= endDate);
+                    return matchPartner && matchDate;
+                });
+                filteredData.push({
+                    type: 'payments',
+                    title: '입금 내역',
+                    data: paymentData
+                });
+            }
+
+            if (dataType === 'all' || dataType === 'receipts') {
+                let receiptData = receipts.filter(receipt => {
+                    const matchPartner = !partnerId || receipt.partnerId === partnerId;
+                    const matchDate = (!startDate || receipt.date >= startDate) && 
+                                    (!endDate || receipt.date <= endDate);
+                    return matchPartner && matchDate;
+                });
+                filteredData.push({
+                    type: 'receipts',
+                    title: '입고 내역',
+                    data: receiptData
+                });
+            }
+
+            displayFilteredData(filteredData);
+        }
+
+        // 필터된 데이터 표시
+        function displayFilteredData(filteredData) {
+            const container = document.getElementById('dataViewContainer');
+            
+            if (filteredData.every(section => section.data.length === 0)) {
+                container.innerHTML = '<div class="card"><p style="text-align: center; color: #666;">조건에 맞는 데이터가 없습니다.</p></div>';
+                return;
+            }
+
+            let html = '';
+
+            filteredData.forEach(section => {
+                if (section.data.length > 0) {
+                    html += `<div class="card" style="margin-bottom: 20px;">`;
+                    html += `<h4 style="margin-bottom: 15px;">${section.title} (${section.data.length}건)</h4>`;
+                    
+                    if (section.type === 'partners') {
+                        html += displayPartnersData(section.data);
+                    } else if (section.type === 'orders') {
+                        html += displayOrdersData(section.data);
+                    } else if (section.type === 'advances') {
+                        html += displayAdvancesData(section.data);
+                    } else if (section.type === 'payments') {
+                        html += displayPaymentsData(section.data);
+                    } else if (section.type === 'receipts') {
+                        html += displayReceiptsData(section.data);
+                    }
+                    
+                    html += `</div>`;
+                }
+            });
+
+            container.innerHTML = html;
+        }
+
+        // 거래처 데이터 표시
+        function displayPartnersData(data) {
+            return data.map(partner => {
+                const status = partnerStatus.get(partner.id) || {
+                    pending_payment_order: 0,
+                    pending_payment_advance: 0,
+                    pending_eel_kg: 0
+                };
+                return `
+                    <div class="data-item" data-type="partners" data-id="${partner.id}" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 10px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; align-items: center;">
+                            <div>
+                                <strong><span class="partner-name-clickable" onclick="filterByPartner('${partner.id}', '${partner.name}')" style="cursor: pointer; color: #2563eb; text-decoration: underline;">${partner.name}</span></strong><br>
+                                <small style="color: #666;">${partner.contact || '연락처 없음'}</small>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="color: #dc2626;">선주문: ${formatCurrency(status.pending_payment_order)}</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="color: #ea580c;">외상: ${formatCurrency(status.pending_payment_advance)}</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="color: #7c3aed;">받을장어: ${status.pending_eel_kg}kg</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 선주문 데이터 표시
+        function displayOrdersData(data) {
+            return data.map(order => {
+                const partner = partners.find(p => p.id === order.partnerId);
+                const partnerName = partner ? partner.name : '삭제된 거래처';
+                return `
+                    <div class="data-item" data-type="orders" data-id="${order.id}" style="border: 1px solid #3b82f6; border-radius: 8px; padding: 15px; margin-bottom: 10px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; gap: 10px; align-items: center;">
+                            <div><strong><span class="partner-name-clickable" onclick="filterByPartnerName('${partnerName}')" style="cursor: pointer; color: #2563eb; text-decoration: underline;">${partnerName}</span></strong></div>
+                            <div style="text-align: center;">${order.date}</div>
+                            <div style="text-align: center;">${order.quantity}kg</div>
+                            <div style="text-align: center;">${formatCurrency(order.pricePerKg)}/kg</div>
+                            <div style="text-align: center;"><strong>${formatCurrency(order.totalAmount)}</strong></div>
+                        </div>
+                        ${order.memo ? `<div style="margin-top: 10px; color: #666; font-size: 0.9em;">메모: ${order.memo}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 외상 데이터 표시
+        function displayAdvancesData(data) {
+            return data.map(advance => {
+                const partner = partners.find(p => p.id === advance.partnerId);
+                const partnerName = partner ? partner.name : '삭제된 거래처';
+                return `
+                    <div class="data-item" data-type="advances" data-id="${advance.id}" style="border: 1px solid #f59e0b; border-radius: 8px; padding: 15px; margin-bottom: 10px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; gap: 10px; align-items: center;">
+                            <div><strong><span class="partner-name-clickable" onclick="filterByPartnerName('${partnerName}')" style="cursor: pointer; color: #2563eb; text-decoration: underline;">${partnerName}</span></strong></div>
+                            <div style="text-align: center;">${advance.date}</div>
+                            <div style="text-align: center;">${advance.quantity}kg</div>
+                            <div style="text-align: center;">${formatCurrency(advance.pricePerKg)}/kg</div>
+                            <div style="text-align: center;"><strong>${formatCurrency(advance.totalAmount)}</strong></div>
+                        </div>
+                        ${advance.memo ? `<div style="margin-top: 10px; color: #666; font-size: 0.9em;">메모: ${advance.memo}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 입금 데이터 표시
+        function displayPaymentsData(data) {
+            return data.map(payment => {
+                const partner = partners.find(p => p.id === payment.partnerId);
+                const partnerName = partner ? partner.name : '삭제된 거래처';
+                return `
+                    <div class="data-item" data-type="payments" data-id="${payment.id}" style="border: 1px solid #10b981; border-radius: 8px; padding: 15px; margin-bottom: 10px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; align-items: center;">
+                            <div><strong><span class="partner-name-clickable" onclick="filterByPartnerName('${partnerName}')" style="cursor: pointer; color: #2563eb; text-decoration: underline;">${partnerName}</span></strong></div>
+                            <div style="text-align: center;">${payment.date}</div>
+                            <div style="text-align: center;"><strong>${formatCurrency(payment.amount)}</strong></div>
+                        </div>
+                        ${payment.memo ? `<div style="margin-top: 10px; color: #666; font-size: 0.9em;">메모: ${payment.memo}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 입고 데이터 표시
+        function displayReceiptsData(data) {
+            return data.map(receipt => {
+                const partner = partners.find(p => p.id === receipt.partnerId);
+                const partnerName = partner ? partner.name : '삭제된 거래처';
+                return `
+                    <div class="data-item" data-type="receipts" data-id="${receipt.id}" style="border: 1px solid #8b5cf6; border-radius: 8px; padding: 15px; margin-bottom: 10px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; align-items: center;">
+                            <div><strong><span class="partner-name-clickable" onclick="filterByPartnerName('${partnerName}')" style="cursor: pointer; color: #2563eb; text-decoration: underline;">${partnerName}</span></strong></div>
+                            <div style="text-align: center;">${receipt.date}</div>
+                            <div style="text-align: center;"><strong>${receipt.quantity}kg</strong></div>
+                        </div>
+                        ${receipt.memo ? `<div style="margin-top: 10px; color: #666; font-size: 0.9em;">메모: ${receipt.memo}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 필터된 데이터 출력
+        function exportFilteredData() {
+            const dataType = document.getElementById('dataTypeFilter').value;
+            const partnerId = document.getElementById('dataPartnerFilter').value;
+            const startDate = document.getElementById('dataStartDate').value;
+            const endDate = document.getElementById('dataEndDate').value;
+
+            let filteredData = {};
+            let filterInfo = [];
+
+            // 필터 정보 생성
+            if (partnerId) {
+                const partner = partners.find(p => p.id === partnerId);
+                filterInfo.push(`거래처: ${partner ? partner.name : '알 수 없음'}`);
+            }
+            if (startDate) filterInfo.push(`시작일: ${startDate}`);
+            if (endDate) filterInfo.push(`종료일: ${endDate}`);
+
+            // 데이터 필터링
+            if (dataType === 'all' || dataType === 'partners') {
+                filteredData['거래처'] = partners.filter(p => !partnerId || p.id === partnerId);
+            }
+            if (dataType === 'all' || dataType === 'orders') {
+                filteredData['선주문'] = orders.filter(order => {
+                    const matchPartner = !partnerId || order.partnerId === partnerId;
+                    const matchDate = (!startDate || order.date >= startDate) && (!endDate || order.date <= endDate);
+                    return matchPartner && matchDate;
+                });
+            }
+            if (dataType === 'all' || dataType === 'advances') {
+                filteredData['외상'] = advances.filter(advance => {
+                    const matchPartner = !partnerId || advance.partnerId === partnerId;
+                    const matchDate = (!startDate || advance.date >= startDate) && (!endDate || advance.date <= endDate);
+                    return matchPartner && matchDate;
+                });
+            }
+            if (dataType === 'all' || dataType === 'payments') {
+                filteredData['입금'] = payments.filter(payment => {
+                    const matchPartner = !partnerId || payment.partnerId === partnerId;
+                    const matchDate = (!startDate || payment.date >= startDate) && (!endDate || payment.date <= endDate);
+                    return matchPartner && matchDate;
+                });
+            }
+            if (dataType === 'all' || dataType === 'receipts') {
+                filteredData['입고'] = receipts.filter(receipt => {
+                    const matchPartner = !partnerId || receipt.partnerId === partnerId;
+                    const matchDate = (!startDate || receipt.date >= startDate) && (!endDate || receipt.date <= endDate);
+                    return matchPartner && matchDate;
+                });
+            }
+
+            const title = `필터된 거래 데이터${filterInfo.length > 0 ? ' (' + filterInfo.join(', ') + ')' : ''}`;
+            printData(title, filteredData);
+        }
+
+        // 거래처 ID로 필터링
+        function filterByPartner(partnerId, partnerName) {
+            // 거래처 필터 셀렉트 박스 업데이트
+            document.getElementById('dataPartnerFilter').value = partnerId;
+            
+            // 필터 적용
+            filterData();
+            
+            // 시각적 피드백 제공
+            showFilterNotification(partnerName);
+        }
+
+        // 거래처 이름으로 필터링 (이름으로 ID 찾아서 필터링)
+        function filterByPartnerName(partnerName) {
+            const partner = partners.find(p => p.name === partnerName);
+            if (partner) {
+                filterByPartner(partner.id, partnerName);
+            } else {
+                // 삭제된 거래처의 경우 수동으로 필터링
+                document.getElementById('dataPartnerFilter').value = '';
+                manualFilterByPartnerName(partnerName);
+            }
+        }
+
+        // 삭제된 거래처를 위한 수동 필터링
+        function manualFilterByPartnerName(partnerName) {
+            const dataItems = document.querySelectorAll('.data-item');
+            
+            dataItems.forEach(item => {
+                const partnerNameElement = item.querySelector('.partner-name-clickable');
+                if (partnerNameElement) {
+                    const itemPartnerName = partnerNameElement.textContent;
+                    if (itemPartnerName === partnerName) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            showFilterNotification(partnerName + ' (삭제된 거래처)');
+        }
+
+        // 필터 알림 표시
+        function showFilterNotification(partnerName) {
+            // 기존 알림 제거
+            const existingNotification = document.getElementById('filterNotification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+
+            // 새 알림 생성
+            const notification = document.createElement('div');
+            notification.id = 'filterNotification';
+            notification.innerHTML = `
+                <div style="background: #3b82f6; color: white; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                    <span>📋 "${partnerName}" 거래처로 필터링되었습니다.</span>
+                    <button onclick="clearPartnerFilter()" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer;">전체 보기</button>
+                </div>
+            `;
+            
+            // 데이터 컨테이너 위에 삽입
+            const container = document.getElementById('dataViewContainer');
+            container.parentNode.insertBefore(notification, container);
+        }
+
+        // 거래처 필터 해제
+        function clearPartnerFilter() {
+            // 필터 초기화
+            document.getElementById('dataPartnerFilter').value = '';
+            
+            // 데이터 다시 필터링
+            filterData();
+            
+            // 알림 제거
+            const notification = document.getElementById('filterNotification');
+            if (notification) {
+                notification.remove();
+            }
+        }
+
+        // 데이터 출력 함수
+        function printData(title, data) {
+            const printWindow = window.open('', '_blank');
+            let html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>${title}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        h1 { color: #333; border-bottom: 2px solid #333; padding-bottom: 10px; }
+                        h2 { color: #666; margin-top: 30px; }
+                        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        th { background-color: #f5f5f5; font-weight: bold; }
+                        tr:nth-child(even) { background-color: #f9f9f9; }
+                        .print-date { text-align: right; color: #666; margin-bottom: 20px; }
+                        @media print {
+                            body { margin: 0; }
+                            .no-print { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-date">출력일: ${new Date().toLocaleDateString('ko-KR')}</div>
+                    <h1>${title}</h1>
+            `;
+
+            Object.entries(data).forEach(([category, items]) => {
+                if (items && items.length > 0) {
+                    html += `<h2>${category} (${items.length}건)</h2>`;
+                    html += '<table>';
+                    
+                    if (category === '거래처') {
+                        html += '<tr><th>거래처명</th><th>연락처</th><th>등록일</th></tr>';
+                        items.forEach(item => {
+                            html += `<tr>
+                                <td>${item.name}</td>
+                                <td>${item.contact || '없음'}</td>
+                                <td>${formatDate(item.createdAt)}</td>
+                            </tr>`;
+                        });
+                    } else if (category === '선주문') {
+                        html += '<tr><th>거래처</th><th>날짜</th><th>수량(kg)</th><th>단가</th><th>총액</th><th>메모</th></tr>';
+                        items.forEach(item => {
+                            const partner = partners.find(p => p.id === item.partnerId);
+                            html += `<tr>
+                                <td>${partner ? partner.name : '삭제된 거래처'}</td>
+                                <td>${item.date}</td>
+                                <td>${item.quantity}</td>
+                                <td>${formatCurrency(item.pricePerKg)}</td>
+                                <td>${formatCurrency(item.totalAmount)}</td>
+                                <td>${item.memo || ''}</td>
+                            </tr>`;
+                        });
+                    } else if (category === '외상') {
+                        html += '<tr><th>거래처</th><th>날짜</th><th>수량(kg)</th><th>단가</th><th>총액</th><th>메모</th></tr>';
+                        items.forEach(item => {
+                            const partner = partners.find(p => p.id === item.partnerId);
+                            html += `<tr>
+                                <td>${partner ? partner.name : '삭제된 거래처'}</td>
+                                <td>${item.date}</td>
+                                <td>${item.quantity}</td>
+                                <td>${formatCurrency(item.pricePerKg)}</td>
+                                <td>${formatCurrency(item.totalAmount)}</td>
+                                <td>${item.memo || ''}</td>
+                            </tr>`;
+                        });
+                    } else if (category === '입금') {
+                        html += '<tr><th>거래처</th><th>날짜</th><th>입금액</th><th>메모</th></tr>';
+                        items.forEach(item => {
+                            const partner = partners.find(p => p.id === item.partnerId);
+                            html += `<tr>
+                                <td>${partner ? partner.name : '삭제된 거래처'}</td>
+                                <td>${item.date}</td>
+                                <td>${formatCurrency(item.amount)}</td>
+                                <td>${item.memo || ''}</td>
+                            </tr>`;
+                        });
+                    } else if (category === '입고') {
+                        html += '<tr><th>거래처</th><th>날짜</th><th>수량(kg)</th><th>메모</th></tr>';
+                        items.forEach(item => {
+                            const partner = partners.find(p => p.id === item.partnerId);
+                            html += `<tr>
+                                <td>${partner ? partner.name : '삭제된 거래처'}</td>
+                                <td>${item.date}</td>
+                                <td>${item.quantity}</td>
+                                <td>${item.memo || ''}</td>
+                            </tr>`;
+                        });
+                    }
+                    
+                    html += '</table>';
+                }
+            });
+
+            html += `
+                    <div style="margin-top: 30px; text-align: center;" class="no-print">
+                        <button onclick="window.print()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">인쇄</button>
+                        <button onclick="window.close()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">닫기</button>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            printWindow.document.write(html);
+            printWindow.document.close();
+        }
+    </script>
+</body>
+</html>
